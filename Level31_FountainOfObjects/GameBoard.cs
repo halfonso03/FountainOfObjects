@@ -1,14 +1,10 @@
 ﻿
 
 
-public interface IGameBoard
-{
-
-    Position CalculateNewPosition(int row, int column);
-
-}
 
 
+
+using Level31_FountainOfObjects;
 
 public class GameBoard : IGameBoard
 {

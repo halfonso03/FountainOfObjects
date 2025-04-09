@@ -3,12 +3,9 @@
 
 
 
-public interface IGameboardRenderer
-{
-    GameBoard RenderGameBoard(int boardSize);
-}
 
 
+using Level31_FountainOfObjects;
 
 public class GameboardRenderer() : IGameboardRenderer
 {
