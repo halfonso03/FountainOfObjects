@@ -1,4 +1,6 @@
-﻿new FountainOfObjectsGame(
+﻿using Level31_FountainOfObjects.GameBoard.Board;
+
+new FountainOfObjectsGame(
         new ConsoleUserInteractor(), 
         new GameboardRenderer(),
         new Player(new ConsoleUserInteractor())).Start();
@@ -59,4 +61,14 @@ public struct Position
         Row = row;
         Column = coloumn;
     }
+
+    public override string ToString()
+    {
+        return $"Row {Row}, Column {Column}";
+    }
+}
+
+public interface IGameboardRenderer
+{
+    IGameBoard RenderGameBoard(int boardSize);
 }

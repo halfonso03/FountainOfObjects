@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Level31_FountainOfObjects.GameBoard.Board;
 
-namespace Level31_FountainOfObjects.GameBoard
+namespace Level31_FountainOfObjects
 {
 
-    public interface IGameboardRenderer
-    {
-        GameBoard RenderGameBoard(int boardSize);
-    }
+
 
 }

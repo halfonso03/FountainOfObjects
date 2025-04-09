@@ -1,4 +1,6 @@
-﻿using Level31_FountainOfObjects.GameBoard;
+﻿using Level31_FountainOfObjects;
+using Level31_FountainOfObjects.GameBoard;
+using Level31_FountainOfObjects.GameBoard.Board;
 using System.Net.Http.Headers;
 
 public class FountainOfObjectsGame
@@ -7,7 +9,7 @@ public class FountainOfObjectsGame
     private readonly IGameboardRenderer _gameboardRenderer;
     private readonly IPlayer _player;
     private const string USER_PROMPT_MESSAGE = "What do you want to do? ";
-    private GameBoard _gameBoard;
+    private IGameBoard _gameBoard;
     private Dictionary<string, Func<bool>> _playerMoves;
     private Position _startingPosition = new Position();
     private Position _fountainPosition = new() { Column = 2, Row = 0 };
@@ -172,6 +174,7 @@ public class FountainOfObjectsGame
     {
         var gameWon = false;
         var gameLost = false;
+        var gameLostReason = "";
 
         do
         {
@@ -231,6 +234,7 @@ public class FountainOfObjectsGame
                     if (_gameBoard.PlayerLandedOnObstacle<Pit>(_playerPosition))
                     {
                         gameLost = true;
+                        gameLostReason = "You fell into pit!";
                     }
                     else if (_gameBoard.PlayerLandedOnObstacle<Amarok>(_playerPosition))
                     {
@@ -239,6 +243,7 @@ public class FountainOfObjectsGame
                         if (amarok!.IsAlive)
                         {
                             gameLost = true;
+                            gameLostReason = "You were killed by an Amarok"l
                         }
                     }
                     else if (_gameBoard.PlayerLandedOnObstacle<Maelstrom>(_playerPosition)) {
@@ -294,7 +299,7 @@ public class FountainOfObjectsGame
 
         if (gameLost)
         {
-            _userInteractor.ShowMessageNewLine("YOU LOST!", TextColor.DarkYellow);
+            _userInteractor.ShowMessageNewLine($"YOU LOST! {gameLostReason}", TextColor.DarkYellow);
         }
 
         var ts = endTime - _startDateTime;

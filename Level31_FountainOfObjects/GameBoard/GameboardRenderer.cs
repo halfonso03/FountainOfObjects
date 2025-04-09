@@ -1,8 +1,10 @@
-﻿using Level31_FountainOfObjects.GameBoard;
+﻿using Level31_FountainOfObjects;
+using Level31_FountainOfObjects.GameBoard;
+using Level31_FountainOfObjects.GameBoard.Board;
 
 public class GameboardRenderer() : IGameboardRenderer
 {
-    public GameBoard RenderGameBoard(int boardSize)
+    public IGameBoard RenderGameBoard(int boardSize)
     {
         int[,] grid = new int[boardSize, boardSize];
         Obstacle[] obstacles;
