@@ -1,22 +1,6 @@
 ﻿
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 public interface IUserInteractor
 {
     void ShowMessage(string message, TextColor textColor = TextColor.White);
