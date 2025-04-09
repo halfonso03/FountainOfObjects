@@ -243,7 +243,7 @@ public class FountainOfObjectsGame
                         if (amarok!.IsAlive)
                         {
                             gameLost = true;
-                            gameLostReason = "You were killed by an Amarok"l
+                            gameLostReason = "You were killed by an Amarok.";
                         }
                     }
                     else if (_gameBoard.PlayerLandedOnObstacle<Maelstrom>(_playerPosition)) {
@@ -267,8 +267,8 @@ public class FountainOfObjectsGame
                         while (otherObstacle is not null)
                         {
                             _gameBoard.MovePlayerToPosition(_playerPosition.Row + 1, _playerPosition.Column + 1);
-                            //_playerPosition = _gameBoard.PlayerPosition;
-                            _playerPosition = _player.Position;
+                            _playerPosition = _gameBoard.PlayerPosition;
+                            //_playerPosition = _player.Position;
                             otherObstacle = _gameBoard.GetObstacleAtPosition(_playerPosition);
                         }
                     }
