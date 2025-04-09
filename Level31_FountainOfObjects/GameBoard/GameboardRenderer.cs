@@ -1,11 +1,4 @@
-﻿
-
-
-
-
-
-
-using Level31_FountainOfObjects;
+﻿using Level31_FountainOfObjects.GameBoard;
 
 public class GameboardRenderer() : IGameboardRenderer
 {

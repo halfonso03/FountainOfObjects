@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Level31_FountainOfObjects
+namespace Level31_FountainOfObjects.GameBoard
 {
     public interface IGameBoard
     {

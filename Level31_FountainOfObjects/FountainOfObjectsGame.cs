@@ -1,6 +1,4 @@
-﻿
-
-using Level31_FountainOfObjects;
+﻿using Level31_FountainOfObjects.GameBoard;
 using System.Net.Http.Headers;
 
 public class FountainOfObjectsGame
