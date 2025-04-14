@@ -267,8 +267,8 @@ public class FountainOfObjectsGame
                         while (otherObstacle is not null)
                         {
                             _gameBoard.MovePlayerToPosition(_playerPosition.Row + 1, _playerPosition.Column + 1);
-                            _playerPosition = _gameBoard.PlayerPosition;
-                            //_playerPosition = _player.Position;
+                            //_playerPosition = _gameBoard.PlayerPosition;
+                            _playerPosition = _player.Position;
                             otherObstacle = _gameBoard.GetObstacleAtPosition(_playerPosition);
                         }
                     }
