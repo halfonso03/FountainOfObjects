@@ -26,10 +26,14 @@ public abstract class Character
 
     internal void IncreaseHealthBy(int amount)
     {
-        if ( CurrentHealth + amount <= MaximumHP )
+        if (CurrentHealth + amount <= MaximumHP)
         {
             CurrentHealth += amount;
-        }       
+        }
+        else if (CurrentHealth + amount > MaximumHP)
+        {
+            CurrentHealth = MaximumHP;
+        }
     }
 
     internal void DecreaseHealth(int damage)

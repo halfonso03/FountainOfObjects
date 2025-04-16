@@ -55,7 +55,7 @@ public class Battle
 
         IParty attackingParty, defendingParty;
         CharacterAction characterAction;
-
+        int computerRoundsPlayed = 0;
         var heroLost = false;
 
         GameMode gameMode = GetGameMode();
@@ -75,6 +75,7 @@ public class Battle
 
             if (_attackingPlayer.PlayerType == PlayerType.Computer)
             {
+                computerRoundsPlayed++;
                 attackingParty = _attackingPlayer.Parties.Where(x => x.CharacterCount > 0).First();                
             }
             else
@@ -106,12 +107,29 @@ public class Battle
             }
 
 
-            var itemsOptions = attackingParty.GetItemsMenu(attackOptions.Length + 1);
+            bool havePotion = false;
+            int autoSelectePotionId = 0;
+            UseItemAction? savedPotionAction = default;
+
+            var itemOptions = attackingParty.GetItemsMenu(attackOptions.Length + 1);
 
             if (attackingParty.Items.Count > 0)
             {               
-                foreach (var item in itemsOptions)
+                foreach (var item in itemOptions)
                 {
+                    if (_attackingPlayer.PlayerType == PlayerType.Computer && !havePotion && computerRoundsPlayed % 4 == 0)
+                    {
+                        if (item.Action is UseItemAction useItemAction)
+                        {
+                            if (useItemAction.Item is HealthPotion potion)
+                            {
+                                havePotion = true; 
+                                autoSelectePotionId = item.Id;                                
+                                savedPotionAction = useItemAction;
+                            }
+                        }
+                    }                    
+
                     _userInteractor.WriteLine($"{item.Id} - {item.Action.Name}");
                 }                                   
             }
@@ -119,10 +137,29 @@ public class Battle
 
 
             _userInteractor.WriteLine("What do you want to do?");
+            
+            if (autoSelectePotionId != 0)
+            {
+                Character? character = _attackingPlayer.GetHealthRestoreCandidate();
+                
+                if (character is not null)
+                {
+                    _userInteractor.WriteLine("Potion auto selected!", TextColor.Magenta);
+                    characterAction = savedPotionAction!;
+                }
+                else
+                {
+                    characterAction = attackingCharacter.StandardAttack;
+                }
+            }
+            else
+            {
+                characterAction = (_attackingPlayer.PlayerType == PlayerType.Human)
+                    ? GetHumanPlayerAction(attackOptions.Union(itemOptions).ToArray())
+                    : attackingCharacter.StandardAttack;
 
-            characterAction = (_attackingPlayer.PlayerType == PlayerType.Human)
-                ? GetHumanPlayerAction(attackOptions.Union(itemsOptions).ToArray())
-                : attackingCharacter.StandardAttack;            
+            }
+
 
 
             if (characterAction is AttackAction action)
@@ -133,7 +170,6 @@ public class Battle
             else if (characterAction is UseItemAction action2)
             {
                 action2.UseItem(attackingCharacter);
-
                 _userInteractor.WriteLine($"{attackingCharacter.Name} used {action2.Name}", TextColor.Green);
             }
             
@@ -149,7 +185,7 @@ public class Battle
             heroLost = _player1.Parties[0].CharacterCount == 0;
 
             _userInteractor.WriteLine($"\n");
-            Thread.Sleep(500);
+            //Thread.Sleep(500);
         }
         while (_player2.Parties.Where(x => x.CharacterCount > 0).Any() && !heroLost);
 
@@ -177,8 +213,6 @@ public class Battle
         _userInteractor.WriteLine($"{hero.Name}                         (  {hero.CurrentHealth}/{hero.MaximumHP}  )", TextColor.Red);
         _userInteractor.WriteLine("----------------------------------- vs ---------------------------------", TextColor.Blue);
         
-
-
         var characters = _player2.Parties.SelectMany(x => x.GetCharacters());
 
         foreach(var character in characters)

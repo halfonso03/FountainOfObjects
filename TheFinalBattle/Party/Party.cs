@@ -22,7 +22,7 @@ public class Party : IParty
     public int CharacterCount => _characters.Count;
 
     public int CurrentAttackingCharacterIndex = 0;
-    public List<IItem> Items { get; set; }
+    public List<IItem> Items { get; set; } = new List<IItem>();
 
     public Party(int characterCount)
     {
@@ -63,9 +63,9 @@ public class Party : IParty
 
     public IEnumerable<MenuItem> GetItemsMenu(int startIndex = 1)
     {
-        return Items.Select((item, i) =>
-            new MenuItem(i + startIndex, item.Name, true, new UseItemAction(item)));
-    }
-
-    
+        return Items
+            .Where(x => !x.Used)
+            .Select((item, i) =>
+                new MenuItem(i + startIndex, item.Name, true, new UseItemAction(item)));
+    }    
 }

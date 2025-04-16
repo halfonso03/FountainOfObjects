@@ -11,6 +11,8 @@ public class UseItemAction : CharacterAction
         _item = item;
     }
 
+    public IItem Item { get => _item; }
+
     public override string Name
     {
         get
