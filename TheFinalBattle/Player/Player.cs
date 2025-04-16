@@ -26,4 +26,9 @@ public class Player : IPlayer
             ? character 
             : null;
     }
+
+    internal void ClearParty()
+    {
+        throw new NotImplementedException();
+    }
 }

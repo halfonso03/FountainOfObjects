@@ -1,6 +1,6 @@
 ﻿namespace TheFinalBattle.Actions; 
-public class Punch : AttackAction
+public class Punch : StandardAttackAction
 {
-    public override string Name { get; set; } = "PUNCH";
+    public override string Name { get; } = "PUNCH";
     public override int DamageDealt() => 1;
 }

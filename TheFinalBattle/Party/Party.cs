@@ -1,17 +1,21 @@
 ﻿using TheFinalBattle.Actions;
 using TheFinalBattle.Characters;
+using TheFinalBattle.Item;
 
 public interface IParty
 {
     int CharacterCount { get; }
     List<IItem> Items { get; set; }
+    List<Gear> AttackGear { get; set; }
     PartyType PartyType { get; init; }
     Character GetCharacterAt(int index);
     Character GetNextCharacter();
     void RemoveCharacter(Character enemyCharacter);
     IEnumerable<Character> GetCharacters(Func<Character, bool> predicate);
     IEnumerable<Character?> GetCharacters();
-    IEnumerable<MenuItem> GetItemsMenu(int startIndex = 1);
+    IEnumerable<MenuItem> GetAvailableItemActionsMenu(int startIndex = 1);
+    IEnumerable<MenuItem> GetAvailableGearMenu(int startIndex = 1);
+    MenuItem? GetGearAttackOption(Character character, int startIndex = 1);
 }
 
 
@@ -22,7 +26,8 @@ public class Party : IParty
     public int CharacterCount => _characters.Count;
 
     public int CurrentAttackingCharacterIndex = 0;
-    public List<IItem> Items { get; set; } = new List<IItem>();
+    public List<IItem> Items { get; set; } = [];
+    public List<Gear> AttackGear { get; set; } = [];
 
     public Party(int characterCount)
     {
@@ -39,6 +44,10 @@ public class Party : IParty
         foreach (var c in _characters)
         {
             c.Party = this;
+            if (c.EquippedGear != null)
+            {
+                AttackGear.Add(c.EquippedGear);
+            }
         }
     }
 
@@ -46,7 +55,12 @@ public class Party : IParty
     public IEnumerable<Character> GetCharacters(Func<Character, bool> predicate) => _characters.Where(predicate);
     public void RemoveCharacter(Character enemyCharacter)
     {
+        if (enemyCharacter.EquippedGear is not null)
+        {            
+            Gear.UnequipCharacter(enemyCharacter?.EquippedGear);
+        }
         _characters.Remove(enemyCharacter);
+        
     }
     public IEnumerable<Character?> GetCharacters() => _characters.AsEnumerable();
     public Character GetNextCharacter()
@@ -61,11 +75,30 @@ public class Party : IParty
         return _characters[CurrentAttackingCharacterIndex];
     }
 
-    public IEnumerable<MenuItem> GetItemsMenu(int startIndex = 1)
+    public IEnumerable<MenuItem> GetAvailableItemActionsMenu(int startIndex = 1)
     {
         return Items
             .Where(x => !x.Used)
             .Select((item, i) =>
                 new MenuItem(i + startIndex, item.Name, true, new UseItemAction(item)));
-    }    
+    }
+
+    public IEnumerable<MenuItem> GetAvailableGearMenu(int startIndex = 1)
+    {
+        return AttackGear        
+            .Where(x => !x.Equipped)
+            .Select((item, i) =>
+                new MenuItem(i + startIndex, item.Name, true, new GearEquipAction(item)));
+    }
+
+    public MenuItem? GetGearAttackOption(Character character, int startIndex = 1)
+    {
+        return AttackGear
+            .Where(x => x.Equipped && x.EquippedCharacter == character)
+            .Select((item, i) =>
+                new MenuItem(i + startIndex, item.Name, true, new GearAttackAction(item)))
+             .FirstOrDefault();
+    }
+
+  
 }

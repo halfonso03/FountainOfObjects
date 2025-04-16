@@ -19,7 +19,7 @@ public class UseItemAction : CharacterAction
         {
             return $"Use Item ({_item.Name})";
         }
-        set {}
+       
     }
 
     public void UseItem(Character character)
