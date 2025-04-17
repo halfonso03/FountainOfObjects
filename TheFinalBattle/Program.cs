@@ -1,20 +1,37 @@
-﻿using TheFinalBattle.Actions;
+﻿using System.Net.Http.Headers;
+using TheFinalBattle.Actions;
+using TheFinalBattle.Actions.AttackActions;
 using TheFinalBattle.Characters;
 using TheFinalBattle.Item;
 using TheFinalBattle.Player;
 
 
-var heroCharacter = new HeroCharacter();
+//for (var i = 0; i < 10; i++)
+//{
+//    Console.WriteLine(GearAttackAction.GetAttackSuccessProbability()); 
+//}
+
+//Console.ReadKey();
+
+
+var trueProgrammer = new HeroCharacter() { Label = "The True Progammer" };
+var vinFletcher = new HeroCharacter(15) { Label = "Vin Fletcher" };
+
 var heroSword = new Sword();
 var heroDagger = new Dagger();
+var bow = new Bow(vinFletcher);
+
+
 
 var heroParty = new Party(
-        [heroCharacter])
+        [trueProgrammer, vinFletcher])
 {
     Items = [new HealthPotion(), new HealthPotion(), new HealthPotion()]
 };
 heroParty.AttackGear.Add(heroSword);
 heroParty.AttackGear.Add(heroDagger);
+
+
 
 var player1 = new Player([heroParty]) { PlayerType = PlayerType.Human };
 
@@ -22,15 +39,17 @@ var player1 = new Player([heroParty]) { PlayerType = PlayerType.Human };
 var battle1Skeleton1 = new Skeleton();
 //var dagger = new Dagger(battle1Skeleton1);
 var dagger = new Dagger();
+var hammer = new Hammer();
 
 
 
 var battle1Party = new Party([battle1Skeleton1])
 {
     PartyType = PartyType.Villian,
-    Items = [new HealthPotion()]
+    Items = [new HealthPotion(), new Scarf(), new Scarf()]
 };
 battle1Party.AttackGear.Add(dagger);
+battle1Party.AttackGear.Add(hammer);
 
 
 // battle 2 party setup
@@ -64,110 +83,10 @@ var player2 = new Player(
     ]);
 
 
-new BattleGame(player1, player2, new ConsoleUserInteractor())
-    .Run();
-
-public class BattleGame
-{
-    private IUserInteractor _userInteractor;
-    private Player _player1;
-    private Player _player2;
- 
-    public BattleGame(Player player1, Player player2, IUserInteractor userInteractor)
-    {
-        _player1 = player1;        
-        _player2 = player2; 
-        _userInteractor = userInteractor;
-    }
-
-    public void Run()
-    {
-        GameMode gameMode = GetGameMode();
-
-        GetHeroName();
-
-        SetPlayer1Type(gameMode, ref _player1);
-
-        SetPlayer2Type(gameMode, ref _player2);
+new BattleRunner(player1, player2, new ConsoleUserInteractor()).Run();
 
 
-        new Battle(_player1, _player2, _userInteractor).Play();
-    }
 
-    private void SetPlayer2Type(GameMode gameMode, ref Player player)
-    {
-        player.PlayerType = gameMode switch
-        {
-            GameMode.Computer_vs_Computer => PlayerType.Computer,
-            GameMode.Player_vs_Computer => PlayerType.Computer,
-            GameMode.Player_vs_Player => PlayerType.Human,
-        };
-    }
-
-    private void SetPlayer1Type(GameMode gameMode, ref Player player)
-    {
-        player.PlayerType = gameMode switch
-        {
-            GameMode.Computer_vs_Computer => PlayerType.Computer,
-            GameMode.Player_vs_Computer => PlayerType.Human,
-            GameMode.Player_vs_Player => PlayerType.Human,
-        };
-    }
-
-    private void GetHeroName()
-    {
-        foreach (var party in _player1.Parties.Union(_player2.Parties))
-        {
-            foreach (var character in party.GetCharacters())
-            {
-                if (character is HeroCharacter)
-                {
-                    string heroName = "";
-                    do
-                    {
-                        _userInteractor.WriteLine("Enter the hero's name:");
-                        heroName = _userInteractor.GetUserInput();
-                    }
-                    while (string.IsNullOrEmpty(heroName));
-
-                    party.GetCharacterAt(0).Name = heroName;
-                }
-            }
-        }
-    }
-
-    private GameMode GetGameMode()
-    {
-        GameMode mode = GameMode.None;
-
-        _userInteractor.WriteLine("Choose from 1 of 3 game modes:", TextColor.Blue);
-
-        foreach (var value in Enum.GetValues(typeof(GameMode)))
-        {
-            if ((int)value != 0)
-                _userInteractor.WriteLine($"{(int)value} - {value.ToString()}");
-        }
-
-        do
-        {
-            var input = _userInteractor.GetUserInput();
-            int selectedValue = 0;
-
-            if (int.TryParse(input, out selectedValue) && Enum.IsDefined(typeof(GameMode), selectedValue))
-            {
-                mode = (GameMode)selectedValue;
-            }
-            else
-            {
-                _userInteractor.WriteLine("Invalid game mode selected. Try again");
-            }
-
-        }
-        while (mode == GameMode.None);
-
-        return mode;
-    }
-}
 
 public class Battle
 {   
@@ -192,7 +111,8 @@ public class Battle
         int computerRoundsPlayed = 0;
         var heroLost = false;
         int round = 1;
-        foreach (var party in _player2.Parties)
+
+        foreach (var villainParty in _player2.Parties)
         {
             UseItemAction? computerPlayerPotionAction = default;
             GearEquipAction? computerPlayerGearEquipAction = default;
@@ -201,9 +121,6 @@ public class Battle
             do
             {
                 bool havePotion = false;
-                //bool gearEquipActionAutoSelected = false;
-                int autoSelectedPotionId = 0;
-                
 
                 _attackingPlayer = _attackingPlayer == _player1 ? _player2 : _player1;
                 var defendingPlayer = _attackingPlayer == _player1 ? _player2 : _player1;
@@ -213,7 +130,7 @@ public class Battle
                 if (_attackingPlayer.PlayerType == PlayerType.Computer)
                 {
                     computerRoundsPlayed++;
-                    attackingParty = party;
+                    attackingParty = villainParty;
                 }
                 else
                 {
@@ -222,30 +139,42 @@ public class Battle
 
                 defendingParty = defendingPlayer.Parties.Where(x => x.CharacterCount > 0).First();
 
-                var attackingCharacter = attackingParty.GetCharacterAt(0);
-                var defendingCharacter = defendingParty.GetCharacterAt(0);
+
+                var attackingCharacter = attackingParty.PartyType == PartyType.Hero
+                        ? attackingParty.GetNextAttackingCharacter()
+                        : attackingParty.GetCharacterAt(0);
 
 
-                ShowGameStatus(party, round);
+                var defendingCharacter = defendingParty.PartyType == PartyType.Hero
+                        ? defendingParty.GetCurrentAttackingCharacter()
+                        : defendingParty.GetCharacterAt(0);
+               
 
-                _userInteractor.WriteLine($"It is {attackingCharacter.Name}'s turn...choose an option");
+                ShowGameStatus(villainParty, round);
+
+                _userInteractor.WriteLine($"It is {attackingCharacter.Name} ({attackingCharacter.Label})'s turn...choose an option");
+
+
 
 
                 var optionCount = 0;
-                var attackOptions = attackingCharacter.GetAttackMenu();
+                var attackOptions = attackingCharacter.GetStandardAttackMenuOptions();
                 optionCount += attackOptions.Length;
 
-                var gearAttackOption = attackingParty.GetGearAttackOption(attackingCharacter, optionCount + 1);
+
+                var gearAttackOption = attackingParty.GetEquippedGearAttackOption(attackingCharacter, optionCount + 1);
                 if (gearAttackOption is not null)
                 {
                     optionCount++;
-                }                
+                }
 
-                var itemActionsOptions = attackingParty.GetAvailableItemActionsMenu((gearAttackOption is not null ? 1 : 0) + optionCount + 1);
+                var itemActionsOptions = attackingParty.GetAvailableItemActionsMenu(optionCount + 1);
                 optionCount += itemActionsOptions.Count();
 
-                var unequippedGearActionOptions = attackingParty.GetAvailableGearMenu(optionCount + 1);
+                var unequippedGearActionOptions = attackingParty.GetEquippableGearMenu(optionCount + 1);
                 optionCount += unequippedGearActionOptions.Count();
+
+
 
 
                 foreach (var option in attackOptions)
@@ -273,7 +202,6 @@ public class Battle
                 {
                     _userInteractor.WriteLine("\nAvailable Items:\n---------------------------------------");
 
-
                     foreach (var itemActionOption in itemActionsOptions)
                     {
                         if (_attackingPlayer.PlayerType == PlayerType.Computer && !havePotion && computerRoundsPlayed % 4 == 0)
@@ -283,7 +211,6 @@ public class Battle
                                 if (useItemAction.Item is HealthPotion potion)
                                 {
                                     havePotion = true;
-                                    autoSelectedPotionId = itemActionOption.Id;
                                     computerPlayerPotionAction = (UseItemAction)itemActionOption.Action;
                                 }
                             }
@@ -296,7 +223,7 @@ public class Battle
 
 
 
-                if (unequippedGearActionOptions.Count() > 0)
+                if (unequippedGearActionOptions.Any())
                 {
                     _userInteractor.WriteLine("\nAvailable Gear:\n---------------------------------------");
 
@@ -304,7 +231,7 @@ public class Battle
                     {
                         _userInteractor.WriteLine($"{gearAction.Id} - {gearAction.Action.Name}");
 
-                        if (_attackingPlayer.PlayerType == PlayerType.Computer) //&& computerRoundsPlayed % 2 == 0
+                        if (_attackingPlayer.PlayerType == PlayerType.Computer && computerRoundsPlayed % 2 == 0)
                         {
                             if (attackingCharacter.EquippedGear is null && computerPlayerPotionAction is null)
                             {
@@ -314,7 +241,7 @@ public class Battle
                                 {
                                     computerPlayerGearEquipAction = gearEquipAction;
                                 }
-                            }                            
+                            }
                         }
                     }
                 }
@@ -324,41 +251,35 @@ public class Battle
                 if (_attackingPlayer.PlayerType == PlayerType.Computer && gearAttackOption is not null)
                 {
                     if (attackingCharacter.EquippedGear is not null)
-                    {                       
+                    {
                         computerPlayerGearAttackAction = gearAttackOption.Action as GearAttackAction;
                     }
                 }
 
 
-
-
-
-
-
-
                 _userInteractor.WriteLine("\nWhat do you want to do?");
 
-                if (computerPlayerPotionAction is not null)
+
+
+                if (computerPlayerPotionAction is not null &&
+                        _attackingPlayer.GetHealthRestoreCandidate() is not null)
                 {
-                    if (_attackingPlayer.GetHealthRestoreCandidate() is not null)
-                    {
-                        _userInteractor.WriteLine("--------------------------------------", TextColor.Magenta);
-                        _userInteractor.WriteLine("Computer auto-selected Health Potion!", TextColor.Magenta);
-                        _userInteractor.WriteLine("--------------------------------------", TextColor.Magenta);
-                        characterAction = computerPlayerPotionAction!;
-                    }
-                    else
-                    {
-                        characterAction = attackingCharacter.StandardAttack;
-                    }
+                    _userInteractor.WriteLine("--------------------------------------", TextColor.Magenta);
+                    _userInteractor.WriteLine("Computer auto-selected Health Potion!", TextColor.Magenta);
+                    _userInteractor.WriteLine("--------------------------------------", TextColor.Magenta);
+                    characterAction = computerPlayerPotionAction!;
+                }
+                else if (computerPlayerGearAttackAction is not null)
+                {
+                    characterAction = computerPlayerGearAttackAction;
                 }
                 else if (computerPlayerGearEquipAction is not null)
                 {
                     characterAction = computerPlayerGearEquipAction;
                 }
-                else if (computerPlayerGearAttackAction is not null)
+                else if (_attackingPlayer.PlayerType == PlayerType.Computer)
                 {
-                    characterAction = computerPlayerGearAttackAction;
+                    characterAction = attackingCharacter.StandardAttack;
                 }
                 else
                 {
@@ -375,33 +296,12 @@ public class Battle
 
                     humanAttackOptions = humanAttackOptions.Union(unequippedGearActionOptions).ToArray();
 
-                    characterAction = (_attackingPlayer.PlayerType == PlayerType.Human)
-                        ? GetHumanPlayerAction(humanAttackOptions.ToArray())
-                        : attackingCharacter.StandardAttack;
+                    characterAction = characterAction = GetHumanPlayerAction(humanAttackOptions);
                 }
 
-                if (characterAction is GearEquipAction equipAction)
-                {
-                    equipAction.EquipGear(attackingCharacter);
-                    _userInteractor.WriteLine("--------------------------------------", TextColor.Yellow);
-                    _userInteractor.WriteLine($"{attackingCharacter.Name} equipped himself with a {equipAction.Gear.Name}", TextColor.Yellow);
-                    _userInteractor.WriteLine("--------------------------------------", TextColor.Yellow);
-                }
-                else if (characterAction is GearAttackAction gearAttackAction)
-                {
-                    gearAttackAction.PerformAttack(defendingCharacter, _userInteractor);
-                    _userInteractor.WriteLine($"{attackingCharacter.Name} used {characterAction.Name} on {defendingCharacter.Name}", TextColor.Green);
-                }
-                else if (characterAction is StandardAttackAction attackAction)
-                {
-                    attackAction.PerformAttack(defendingCharacter, _userInteractor);
-                    _userInteractor.WriteLine($"{attackingCharacter.Name} used {characterAction.Name} on {defendingCharacter.Name}", TextColor.Green);
-                }
-                else if (characterAction is UseItemAction action2)
-                {
-                    action2.UseItem(attackingCharacter);
-                    _userInteractor.WriteLine($"{attackingCharacter.Name} used {action2.Name}", TextColor.Green);
-                }
+
+                PerformAction(characterAction, attackingCharacter, defendingCharacter);
+
 
 
                 if (defendingCharacter.CurrentHealth == 0)
@@ -421,15 +321,17 @@ public class Battle
                 computerPlayerGearAttackAction = null;
 
             }
-            while (party.CharacterCount > 0 && !heroLost);
+            while (villainParty.CharacterCount > 0 && !heroLost);
 
-            _userInteractor.WriteLine("----------------------------------------");
-            _userInteractor.WriteLine("Enemt Party defeated!!!");
-            _userInteractor.WriteLine("----------------------------------------");
+            _userInteractor.WriteLine("\n----------------------------------------", TextColor.Magenta);
+            _userInteractor.WriteLine("Enemy Party defeated!!!", TextColor.Magenta);
+            _userInteractor.WriteLine("----------------------------------------\n", TextColor.Magenta);
 
             round++;
 
-        
+            LootVillianItems(villainParty);
+            LootVillainGear(villainParty);
+
         }
 
 
@@ -450,11 +352,86 @@ public class Battle
 
     }
 
+    private void LootVillainGear(IParty villainParty)
+    {
+        foreach (var gear in villainParty.GetEquippableGear())
+        {
+            _userInteractor.WriteLine($"Addded gear: {gear.Name} to Hero party.");
+            _player1.Parties[0].AttackGear.Add(gear);
+        }
+
+        foreach (var gear in villainParty.GetEquippedGear())
+        {
+            _userInteractor.WriteLine($"Addded gear: {gear.Name} to Hero party.");
+            Gear.UnequipCharacter(gear);
+            _player1.Parties[0].AttackGear.Add(gear);
+        }
+
+        _userInteractor.WriteLine("");
+    }
+
+    private void LootVillianItems(IParty villainParty)
+    {
+        foreach(var item in villainParty.Items)
+        {
+            _userInteractor.WriteLine($"Addded Item: {item.Name} to Hero party.");
+        }
+
+        _player1.Parties[0].AddItems(villainParty.Items);
+        villainParty.Items.Clear();
+    }
+
+    private void PerformAction(CharacterAction characterAction, Character attackingCharacter, Character defendingCharacter)
+    {
+        if (characterAction is GearEquipAction equipAction)
+        {
+            equipAction.EquipGear(attackingCharacter);
+            _userInteractor.WriteLine("--------------------------------------", TextColor.Yellow);
+            _userInteractor.WriteLine($"{attackingCharacter.Name} equipped himself with a {equipAction.Gear.Name}", TextColor.Yellow);
+            _userInteractor.WriteLine("--------------------------------------", TextColor.Yellow);
+        }
+        else if (characterAction is GearAttackAction gearAttackAction)
+        {
+            var damageDealt = gearAttackAction.PerformAttack(defendingCharacter, _userInteractor);
+            if (damageDealt == 0)
+            {
+                _userInteractor.WriteLine($"{attackingCharacter.Name} missed!".ToUpper());
+            }
+            else
+            {
+                _userInteractor.WriteLine($"{attackingCharacter.Name} used {characterAction.Name} on {defendingCharacter.Name}", TextColor.Green);
+            }
+            
+        }
+        else if (characterAction is StandardAttackAction attackAction)
+        {
+            var damageDealt = attackAction.PerformAttack(defendingCharacter, _userInteractor);
+            if (damageDealt == 0)
+            {
+                _userInteractor.WriteLine($"{attackingCharacter.Name} missed!".ToUpper());
+            }
+            else
+            {
+                _userInteractor.WriteLine($"{attackingCharacter.Name} used {characterAction.Name} on {defendingCharacter.Name}", TextColor.Green);
+            }
+            
+        }
+        else if (characterAction is UseItemAction action2)
+        {
+            action2.UseItem(attackingCharacter);
+            _userInteractor.WriteLine($"{attackingCharacter.Name} used {action2.Name}", TextColor.Green);
+        }
+    }
+
     private void ShowGameStatus(IParty party, int round)
     {
         _userInteractor.WriteLine($"================================ BATTLE #{round}================================", TextColor.Blue);
-        var hero = _player1.Parties[0].GetCharacterAt(0);
-        _userInteractor.WriteLine($"{hero.Name}                         (  {hero.CurrentHealth}/{hero.MaximumHP}  )", TextColor.Red);
+        foreach (var hero in _player1.Parties[0].GetCharacters())
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("{0,-10} {1,-20} {2,10}", $"{hero.Name}", $"({hero.Label})", $"(  {hero.CurrentHealth}/{hero.MaximumHP}  )", TextColor.Red);
+            Console.ForegroundColor = ConsoleColor.White;
+        }
         _userInteractor.WriteLine("----------------------------------- vs ---------------------------------", TextColor.Blue);
 
         var characters = party.GetCharacters();

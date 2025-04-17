@@ -1,4 +1,6 @@
-﻿namespace TheFinalBattle.Actions;
+﻿using TheFinalBattle.Actions.AttackActions;
+
+namespace TheFinalBattle.Actions;
 
 public class NothingAction : StandardAttackAction
 {    

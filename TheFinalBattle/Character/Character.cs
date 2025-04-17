@@ -1,5 +1,6 @@
 ﻿
 using TheFinalBattle.Actions;
+using TheFinalBattle.Actions.AttackActions;
 using TheFinalBattle.Item;
 
 namespace TheFinalBattle.Characters;
@@ -8,16 +9,17 @@ public abstract class Character
 {
     public abstract CharacterAction[] Actions { get; init; }
     public abstract string Name { get; set; }
+    public abstract string Label { get; set; }
     public abstract CharacterAction StandardAttack { get; }
     public Party Party { get; internal set; }
     public abstract int InitialHP { get; }
     public abstract int MaximumHP { get; }
     protected internal int CurrentHealth { get; set; }
-    public MenuItem[] GetAttackMenu()
+    public MenuItem[] GetStandardAttackMenuOptions()
     {
         var attackActions = Actions
             .OfType<StandardAttackAction>()
-            .Select((a, i) => new MenuItem(i + 1, a.Name, true, a)).ToArray();
+            .Select((action, i) => new MenuItem(i + 1, action.Name, true, action)).ToArray();
 
         return attackActions;
     }

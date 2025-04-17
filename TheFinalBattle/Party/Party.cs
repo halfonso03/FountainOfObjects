@@ -1,4 +1,5 @@
 ﻿using TheFinalBattle.Actions;
+using TheFinalBattle.Actions.AttackActions;
 using TheFinalBattle.Characters;
 using TheFinalBattle.Item;
 
@@ -14,8 +15,13 @@ public interface IParty
     IEnumerable<Character> GetCharacters(Func<Character, bool> predicate);
     IEnumerable<Character?> GetCharacters();
     IEnumerable<MenuItem> GetAvailableItemActionsMenu(int startIndex = 1);
-    IEnumerable<MenuItem> GetAvailableGearMenu(int startIndex = 1);
-    MenuItem? GetGearAttackOption(Character character, int startIndex = 1);
+    IEnumerable<MenuItem> GetEquippableGearMenu(int startIndex = 1);
+    MenuItem? GetEquippedGearAttackOption(Character character, int startIndex = 1);
+    void AddItems(List<IItem> items);
+    IEnumerable<Gear> GetEquippableGear();
+    IEnumerable<Gear> GetEquippedGear();
+    Character GetNextAttackingCharacter();
+    Character GetCurrentAttackingCharacter();
 }
 
 
@@ -83,22 +89,66 @@ public class Party : IParty
                 new MenuItem(i + startIndex, item.Name, true, new UseItemAction(item)));
     }
 
-    public IEnumerable<MenuItem> GetAvailableGearMenu(int startIndex = 1)
+    public IEnumerable<Gear> GetEquippableGear()
     {
-        return AttackGear        
+        return AttackGear
             .Where(x => !x.Equipped)
-            .Select((item, i) =>
-                new MenuItem(i + startIndex, item.Name, true, new GearEquipAction(item)));
+            .Select(x => x);
     }
 
-    public MenuItem? GetGearAttackOption(Character character, int startIndex = 1)
+    public IEnumerable<Gear> GetEquippedGear()
+    {
+        return AttackGear
+           .Where(x => x.Equipped)
+           .Select(x => x);
+    }
+
+    public IEnumerable<MenuItem> GetEquippableGearMenu(int startIndex = 1)
+    {
+        return GetEquippableGear()
+                .Select((item, i) =>
+                    new MenuItem(i + startIndex, item.Name, true, new GearEquipAction(item)));
+    }
+
+    public MenuItem? GetEquippedGearAttackOption(Character character, int startIndex = 1)
     {
         return AttackGear
             .Where(x => x.Equipped && x.EquippedCharacter == character)
             .Select((item, i) =>
                 new MenuItem(i + startIndex, item.Name, true, new GearAttackAction(item)))
-             .FirstOrDefault();
+             .SingleOrDefault();
     }
 
-  
+    public void AddItems(List<IItem> items)
+    {
+        foreach (var item in items)
+        {
+            if (!item.Used)
+            {
+                Items.Add(item);   
+            }
+        }
+    }
+
+    int _characterAttackIndexTracker = 0;
+
+    public Character GetNextAttackingCharacter()
+    {
+        var character = _getNextAttackingCharacter().First();
+        return character;
+    }
+
+    private Character? _currentAttackingCharacter;
+    private IEnumerable<Character> _getNextAttackingCharacter()
+    {        
+        var character = _characters[_characterAttackIndexTracker % _characters.Count];
+        _currentAttackingCharacter = character;
+        _characterAttackIndexTracker++;
+        yield return character; 
+    }
+
+    public Character GetCurrentAttackingCharacter()
+    {
+        return _currentAttackingCharacter;
+    }
 }

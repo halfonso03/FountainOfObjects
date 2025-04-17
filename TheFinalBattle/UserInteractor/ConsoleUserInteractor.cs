@@ -23,6 +23,7 @@
 
     public void WriteLine(string message, TextColor textColor = TextColor.Black)
     {
+        //Thread.Sleep(50);
         Console.ForegroundColor = (ConsoleColor)textColor;
         Console.WriteLine(message);
     }
