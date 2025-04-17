@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TheFinalBattle.Actions.AttackActions;
 using TheFinalBattle.Characters;
 
 namespace TheFinalBattle.Item
@@ -13,7 +14,7 @@ namespace TheFinalBattle.Item
         public abstract string AttackName { get; }
         public bool Equipped { get; set; } = false;
         public abstract int DamageDealt { get; }
-        public abstract void Use(Character character);
+        //public abstract void Use(Character character);
         public Character? EquippedCharacter { get; set; }
 
         protected Gear() { }
@@ -23,12 +24,7 @@ namespace TheFinalBattle.Item
             character.EquippedGear = this;
             Equipped = true;
         }
-
-        //public void SetEquippedCharacter(Character character)
-        //{
-        //    EquippedCharacter = character;
-        //}
-
+       
         internal static void UnequipCharacter(Gear? equippedGear)
         {
             if (equippedGear is not null)
@@ -55,11 +51,6 @@ namespace TheFinalBattle.Item
         public Dagger(Character character) : base(character) { }
         
         public Dagger() { }
-
-        public override void Use(Character character)
-        {
-            character.DecreaseHealthBy(DamageDealt);
-        }
     }
 
     public class Sword : Gear
@@ -73,11 +64,6 @@ namespace TheFinalBattle.Item
         public Sword() { }
 
         public Sword(Character character) : base(character) { }       
-
-        public override void Use(Character character)
-        {
-            character.DecreaseHealthBy(DamageDealt);
-        }
     }
 
     public class Hammer : Gear
@@ -88,11 +74,8 @@ namespace TheFinalBattle.Item
 
         public override string AttackName { get; } = "SMASH";
 
-        public override void Use(Character character)
-        {
-            character.DecreaseHealthBy(DamageDealt);
-        }
         public Hammer() { }
+
         public Hammer(Character character) : base(character) { }
     }
 
@@ -100,15 +83,47 @@ namespace TheFinalBattle.Item
     {
         public override string Name { get; } = "Bow";
 
-        public override int DamageDealt { get; } = 1;
+        public override int DamageDealt { get; } = 3;
 
-        public override string AttackName { get; } = "Shlunkgg";
+        public override string AttackName { get; } = "QUICK SHOT";
 
         public Bow(Character character) : base(character) { }
+    }
 
-        public override void Use(Character character)
+    public class CanonOfConsolas : Gear
+    {
+        public override string Name => "Canon of Consolas";
+
+        public override string AttackName => "Shoot canon";
+
+        public CanonOfConsolas(Character character) : base(character) { }
+
+        public override int DamageDealt
         {
-            character.DecreaseHealthBy(DamageDealt);
+            get
+            {
+                var damageInfo = new DamageInfo();
+
+                var random = new Random();
+                var wata = random.Next(1, 101);
+
+                if (wata % 3 == 0 && wata % 5 == 0)
+                {
+                    damageInfo.InflictedDamage = 5;
+                }
+                else if (wata % 3 == 0 || wata % 5 == 0)
+                {
+                    damageInfo.InflictedDamage = 2;
+                }
+                else if (AttackAction.GetAttackSuccessProbability(90) == 1)
+                {
+                    damageInfo.InflictedDamage = 1;
+                }
+
+                return damageInfo.InflictedDamage ?? 0;
+
+            }
         }
+          
     }
 }

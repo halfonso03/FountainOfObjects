@@ -2,28 +2,24 @@
 
 namespace TheFinalBattle.Actions.AttackActions;
 
-public class BoneCrunch : StandardAttackAction
+public class BoneCrunch : AttackAction
 {
     public override string Name { get; } = "BONE CRUNCH";
 
-    public override int DamageDealt()
+    public override DamageInfo DamageToInflict()
     {
-        //GetAttackSuccessProbability()
-        if (1 == 1)
+        var damageInfo = new DamageInfo();
+
+        if (GetAttackSuccessProbability() == 1)
         {
             var damage = (int)Math.Round(new Random().NextDouble() + .9, 0);
-            return damage;
+            damageInfo.InflictedDamage = damage;            
         }
         else
         {
-            return 0;
+            damageInfo.AttackMissed = true;            
         }
 
-    }
-
-
-    public BoneCrunch() : base()
-    {
-
+        return damageInfo;
     }
 }

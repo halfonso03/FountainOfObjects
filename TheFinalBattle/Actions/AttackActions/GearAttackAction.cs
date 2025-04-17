@@ -2,7 +2,7 @@
 
 namespace TheFinalBattle.Actions.AttackActions;
 
-public class GearAttackAction : StandardAttackAction
+public class GearAttackAction : AttackAction
 {
     private readonly Gear _gear;
 
@@ -14,16 +14,19 @@ public class GearAttackAction : StandardAttackAction
         Name = $"{_gear.Name} ({_gear.AttackName})";
     }
 
-    public override int DamageDealt()
+    public override DamageInfo DamageToInflict()
     {
+        var damageInfo = new DamageInfo();
+
         if (GetAttackSuccessProbability() == 1)
         {
-            return _gear.DamageDealt;
+            damageInfo.InflictedDamage = _gear.DamageDealt;
         }
         else
         {
-            return 0;
+            damageInfo.AttackMissed = true;
         }
 
+        return damageInfo;
     }
 }

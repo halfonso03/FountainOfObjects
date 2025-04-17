@@ -52,6 +52,7 @@ public class Party : IParty
             c.Party = this;
             if (c.EquippedGear != null)
             {
+                c.EquippedGear.Equipped = true; 
                 AttackGear.Add(c.EquippedGear);
             }
         }

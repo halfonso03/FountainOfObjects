@@ -15,6 +15,8 @@ public abstract class Character
     public abstract int InitialHP { get; }
     public abstract int MaximumHP { get; }
     protected internal int CurrentHealth { get; set; }
+    public Gear? EquippedGear { get; set; }
+    public abstract IAttackModifier? AttackModifier { get; set; }
     public MenuItem[] GetStandardAttackMenuOptions()
     {
         var attackActions = Actions
@@ -37,7 +39,7 @@ public abstract class Character
     }
 
     internal void DecreaseHealthBy(int damage)
-    {
+    {               
         if (damage > CurrentHealth)
         {
             CurrentHealth = 0;
@@ -46,7 +48,10 @@ public abstract class Character
         {
             CurrentHealth -= damage;
         }
-    }
 
-    public Gear? EquippedGear { get; set; }
+        if (CurrentHealth > InitialHP)
+        {
+            throw new Exception("Charactr hp cannot exceed initial HP!");
+        }
+    }
 }

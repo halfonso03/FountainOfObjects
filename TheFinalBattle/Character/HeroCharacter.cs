@@ -14,11 +14,19 @@ public class HeroCharacter : Character
     public override CharacterAction StandardAttack => Actions[1];
     public override int InitialHP { get; } = 25;
     public override int MaximumHP { get; } = 25;
-    public HeroCharacter(int initialHP = 0)
+    public override IAttackModifier? AttackModifier { get; set; } = null;
+    public HeroCharacter(int HP = 0)
     {
-        if (initialHP == 0) CurrentHealth = InitialHP;
-        else CurrentHealth = initialHP;
-
+        if (HP == 0)
+        {
+            CurrentHealth = InitialHP;
+        }
+        else
+        {
+            CurrentHealth = HP;
+            MaximumHP = HP;
+            InitialHP = HP;
+        }
     }
 
     public override string ToString()

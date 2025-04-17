@@ -22,7 +22,7 @@ public class Player : IPlayer
     {
         Character? character = Parties.SelectMany(x => x.GetCharacters()).MinBy(x => x.CurrentHealth);
 
-        return (character is not null && character.CurrentHealth == character.MaximumHP / 2) 
+        return (character is not null && character.CurrentHealth <= character.MaximumHP * .2) 
             ? character 
             : null;
     }

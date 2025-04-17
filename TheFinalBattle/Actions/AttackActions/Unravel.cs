@@ -1,19 +1,25 @@
-﻿namespace TheFinalBattle.Actions.AttackActions;
+﻿using TheFinalBattle.Enums;
 
-internal class Unravel : StandardAttackAction
+namespace TheFinalBattle.Actions.AttackActions;
+
+internal class Unravel : AttackAction
 {
     public override string Name { get; } = "UNRAVEL";
-
-    public override int DamageDealt()
+    public override DamageType DamageType { get; } = DamageType.Decoding;
+    public override DamageInfo DamageToInflict()
     {
+        var damageInfo = new DamageInfo();
+
         if (GetAttackSuccessProbability() == 1)
         {
-            return (int)Math.Round(new Random().NextDouble() + .5, 0); ;
+            damageInfo.InflictedDamage = new Random().Next(1, 5);
         }
         else
         {
-            return new Random().Next(1, 3); ;
+            damageInfo.AttackMissed = true;
         }
+
+        return damageInfo;
     }
         
         
