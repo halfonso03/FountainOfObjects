@@ -88,7 +88,7 @@ namespace TheFinalBattle.Item
 
         public override DamageDealtSource DamageDealtSource => DamageDealtSource.Custom;
 
-        public override int DamageDealt => Gear.CalculatedDamageByProbability();
+        public override int DamageDealt => Gear.CalculatedDamageByProbability(98, 2);
     }
 
     public class Hammer : Gear
@@ -126,20 +126,22 @@ namespace TheFinalBattle.Item
 
         public override DamageDealtSource DamageDealtSource => DamageDealtSource.Custom;
 
-        public override int DamageDealt => Gear.CalculatedDamageByProbability();
+        public override int DamageDealt => Gear.CalculatedDamageByProbability(90, 3);
     }
 
     public class FlamingSword : Gear
     {
         public override string Name => "Flaming Sword of Urundil";
 
-        public override string AttackName => "Fire slash2";
+        public override string AttackName => "Fire slash";
 
         public FlamingSword(Character character) : base(character) { }
 
+        public FlamingSword() { }
+
         public override DamageDealtSource DamageDealtSource => DamageDealtSource.Custom;
 
-        public override int DamageDealt => Gear.CalculatedDamageByProbability(90, 4);
+        public override int DamageDealt => Gear.CalculatedDamageByProbability(91, 4);
     }
 }
 

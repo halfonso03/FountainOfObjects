@@ -12,7 +12,7 @@ public abstract class Character
     public abstract string Name { get; set; }
     public abstract string Label { get; set; }
     public abstract CharacterAction StandardAttack { get; }
-    public Party Party { get; internal set; }
+    public Party? Party { get; internal set; }
     public abstract int InitialHP { get; }
     public abstract int MaximumHP { get; }
     protected internal int CurrentHealth { get; protected set; }
@@ -45,21 +45,12 @@ public abstract class Character
 
         if (damage > CurrentHealth)
         {
-            //CurrentHealth = 0;
-
             newHealth = 0;
         }
         else
         {
-            //CurrentHealth = CurrentHealth -= damage;
             newHealth = CurrentHealth - damage;
         }
-
-        //if (CurrentHealth > InitialHP)
-        //{
-        //    throw new Exception("Character hp cannot exceed initial HP!");
-        //}
-
 
         return newHealth;
     }
@@ -69,10 +60,6 @@ public abstract class Character
         CurrentHealth = InitialHP;
     }
 
-    //internal void DecreaseHealthBy(int amount)
-    //{
-    //    CurrentHealth -= amount;    
-    //}
 
     internal void SetHealth(int newHealth)
     {

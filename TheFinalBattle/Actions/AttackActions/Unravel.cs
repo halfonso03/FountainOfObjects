@@ -2,7 +2,7 @@
 
 namespace TheFinalBattle.Actions.AttackActions;
 
-internal class Unravel : AttackAction
+internal class Unravel : StandardAttackAction
 {
     public override string Name { get; } = "UNRAVEL";
     public override DamageType DamageTypeInflicted { get; } = DamageType.Decoding;
