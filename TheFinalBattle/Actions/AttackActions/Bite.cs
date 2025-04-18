@@ -2,9 +2,9 @@
 
 namespace TheFinalBattle.Actions.AttackActions
 {
-    internal class Bite : AttackAction
+    internal class Bite : StandardAttackAction
     {
-        public override string Name => "BITE";
+        public override string Name => "BITE";        
 
         public override DamageInfo DamageToInflict()
         {

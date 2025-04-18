@@ -22,5 +22,6 @@ public class DamageInfo
     }
 
     public DamageType AttackerDamageType { get; internal set; }
-    public DamageType? DefenderDamageTypeModifier { get; internal set; }
+    public DamageType? DefenderDamageType { get; internal set; }
+    public DamageDealtSource DamageDealtSource { get; internal set; }
 }

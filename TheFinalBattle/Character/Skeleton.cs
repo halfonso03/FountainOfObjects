@@ -1,5 +1,6 @@
 ﻿using TheFinalBattle.Actions;
 using TheFinalBattle.Actions.AttackActions;
+using TheFinalBattle.Actions.AttackModifiers;
 
 namespace TheFinalBattle.Characters;
 
@@ -11,7 +12,7 @@ public class Skeleton : Character
     public override CharacterAction StandardAttack => Actions[1];
     public override int InitialHP { get; } = 5;
     public override int MaximumHP { get; } = 5;
-    public override IAttackModifier? AttackModifier { get; set; } = null;
+    public override IDefenseModifier? DefenseModifier { get; set; } = null;
     public Skeleton()
     {
         CurrentHealth = InitialHP;

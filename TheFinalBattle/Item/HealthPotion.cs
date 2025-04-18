@@ -15,3 +15,15 @@ public class HealthPotion : IItem
         _used = true;
     }
 }
+
+public class SimulasSoup : IItem
+{
+    public string Name => "Simulas Soup";
+
+    public bool Used { get; set; } = false;
+
+    public void UseItem(Character character)
+    {
+        character.RestoreFullHealth();
+    }
+}

@@ -1,6 +1,7 @@
 ﻿
 using TheFinalBattle.Actions;
 using TheFinalBattle.Actions.AttackActions;
+using TheFinalBattle.Actions.AttackModifiers;
 using TheFinalBattle.Item;
 
 namespace TheFinalBattle.Characters;
@@ -14,9 +15,9 @@ public abstract class Character
     public Party Party { get; internal set; }
     public abstract int InitialHP { get; }
     public abstract int MaximumHP { get; }
-    protected internal int CurrentHealth { get; set; }
+    protected internal int CurrentHealth { get; protected set; }
     public Gear? EquippedGear { get; set; }
-    public abstract IAttackModifier? AttackModifier { get; set; }
+    public abstract IDefenseModifier? DefenseModifier { get; set; }
     public MenuItem[] GetStandardAttackMenuOptions()
     {
         var attackActions = Actions
@@ -38,20 +39,43 @@ public abstract class Character
         }
     }
 
-    internal void DecreaseHealthBy(int damage)
-    {               
+    internal int GetProposedNewHealth(int damage)
+    {
+        int newHealth = 0;
+
         if (damage > CurrentHealth)
         {
-            CurrentHealth = 0;
+            //CurrentHealth = 0;
+
+            newHealth = 0;
         }
         else
         {
-            CurrentHealth -= damage;
+            //CurrentHealth = CurrentHealth -= damage;
+            newHealth = CurrentHealth - damage;
         }
 
-        if (CurrentHealth > InitialHP)
-        {
-            throw new Exception("Charactr hp cannot exceed initial HP!");
-        }
+        //if (CurrentHealth > InitialHP)
+        //{
+        //    throw new Exception("Character hp cannot exceed initial HP!");
+        //}
+
+
+        return newHealth;
+    }
+
+    internal void RestoreFullHealth()
+    {
+        CurrentHealth = InitialHP;
+    }
+
+    //internal void DecreaseHealthBy(int amount)
+    //{
+    //    CurrentHealth -= amount;    
+    //}
+
+    internal void SetHealth(int newHealth)
+    {
+        CurrentHealth = newHealth;
     }
 }

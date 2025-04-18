@@ -6,13 +6,16 @@ public class BoneCrunch : AttackAction
 {
     public override string Name { get; } = "BONE CRUNCH";
 
+    public override int ProbabilityOfSuccess { get; } = 90;
+
     public override DamageInfo DamageToInflict()
     {
         var damageInfo = new DamageInfo();
 
-        if (GetAttackSuccessProbability() == 1)
+        if (GetSuccessProbability(ProbabilityOfSuccess) == 1)
         {
-            var damage = (int)Math.Round(new Random().NextDouble() + .9, 0);
+            var random = new Random();
+            var damage = random.Next(0, 2);
             damageInfo.InflictedDamage = damage;            
         }
         else

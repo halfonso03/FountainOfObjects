@@ -68,6 +68,7 @@ public class Battle
                 ShowGameStatus(villainParty, round);
 
                 _userInteractor.WriteLine($"It is {attackingCharacter.Name} ({attackingCharacter.Label})'s turn...choose an option");
+                _userInteractor.WriteLine("========================================================================", TextColor.Blue);
 
 
 
@@ -235,7 +236,11 @@ public class Battle
                 computerPlayerGearEquipAction = null;
                 computerPlayerGearAttackAction = null;
 
-                if (attackingParty.PartyType == PartyType.Villian) Console.ReadLine();
+                if (attackingParty.PartyType == PartyType.Villian)
+                {
+                    Console.WriteLine("Press enter to continue...");
+                    Console.ReadLine();
+                }
 
             }
             while (villainParty.CharacterCount > 0 && !heroLost);
@@ -310,21 +315,21 @@ public class Battle
         {
             var attackData = attackAction.PerformAttack(attackingCharacter, defendingCharacter);
 
-            if (attackData.DamageInfo.AttackMissed)
+            _userInteractor.WriteLine($"{attackingCharacter.Name} used {characterAction.Name} on {defendingCharacter.Name}", TextColor.Green);
+
+            if (!attackData.DamageInfo.AttackMissed && attackData.DamageInfo.InflictedDamage == 0)
+            {
+                _userInteractor.WriteLine($"{attackingCharacter.Name} didn't miss, but dealt 0 damage on {defendingCharacter.Name}!".ToUpper());
+            }
+            else if (attackData.DamageInfo.AttackMissed)
             {
                 _userInteractor.WriteLine($"{attackingCharacter.Name} missed!".ToUpper());
-            }
-            else if (attackData.DamageInfo.InflictedDamage == 0)
-            {
-                _userInteractor.WriteLine($"{attackingCharacter.Name} dealt 0 damage on {defendingCharacter.Name}!".ToUpper());
-            }
+            }            
             else
             {
-                _userInteractor.WriteLine($"{attackingCharacter.Name} used {characterAction.Name} on {defendingCharacter.Name}", TextColor.Green);
-
-                if (defendingCharacter.AttackModifier is not null)
+                if (defendingCharacter.DefenseModifier is not null)
                 {
-                    _userInteractor.WriteLine($"** Attack modifier for {defendingCharacter.Name} decreased damage by {Math.Abs(defendingCharacter.AttackModifier.ModifyBy)} ** ");
+                    _userInteractor.WriteLine($"*********** Attack modifier for {defendingCharacter.Name} decreased damage taken by {Math.Abs(defendingCharacter.DefenseModifier.ModifyBy)} ** ");
                 }
                 
                 _userInteractor.WriteLine($"{attackingCharacter.Name} dealt {attackData.DamageInfo.InflictedDamage} to {defendingCharacter.Name}");

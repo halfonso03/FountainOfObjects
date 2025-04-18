@@ -1,38 +1,43 @@
 ﻿using TheFinalBattle.Actions.AttackActions;
+using TheFinalBattle.Actions.AttackModifiers;
 using TheFinalBattle.Characters;
 using TheFinalBattle.Item;
 using TheFinalBattle.Player;
 
 
+//int ones = 0;
+//int zeroes = 0;
 //for (var i = 0; i < 100; i++)
 //{
-//    var t = StandardAttackAction.GetAttackSuccessProbability();
+//    //var t = StandardAttackAction.GetAttackSuccessProbability(90);
 
-//    Console.WriteLine(t);
-//    //if (StandardAttackAction.GetAttackSuccessProbability() == 1)
-//    //{
-//    //    ones++;
-//    //}
-//    //else
-//    //{
-//    //    zeroes++;
-//    //}
+    
+//    if (StandardAttackAction.GetAttackSuccessProbability(90) == 1)
+//    {
+//        ones++;
+//    }
+//    else
+//    {
+//        zeroes++;
+//    }
 
 //}
 //Console.WriteLine(ones);
 //Console.WriteLine(zeroes);
 
 
+//Console.ReadKey();
 
 
 var trueProgrammer = new HeroCharacter()
 {
     Label = "The True Programmer",
-    AttackModifier = new ObjectSightAttackModifier()
+    DefenseModifier = new ObjectSightAttackModifier()
 };
 var vinFletcher = new HeroCharacter(15) { Label = "Vin Fletcher" };
 
-var heroSword = new Sword();
+//var heroSword = new Sword(trueProgrammer);
+var flamingSword = new FlamingSword(trueProgrammer);
 var heroDagger = new Dagger();
 var bow = new Bow(vinFletcher);
 
@@ -43,11 +48,11 @@ var cOfc= new CanonOfConsolas(mylara);
 
 
 var heroParty = new Party(
-        [mylara])
+        [trueProgrammer])
 {
     Items = [new HealthPotion(), new HealthPotion(), new HealthPotion()]
 };
-heroParty.AttackGear.Add(heroSword);
+//heroParty.AttackGear.Add(heroSword);
 heroParty.AttackGear.Add(heroDagger);
 
 
@@ -91,8 +96,9 @@ var player1 = new Player([heroParty]) { PlayerType = PlayerType.Human };
 
 
 // battle 3 party setup
-//var battle3Party = new Party([new UncodedOne()]) { PartyType = PartyType.Villian };
-var battle3Party = new Party([new Skeleton()]) { PartyType = PartyType.Villian };
+var battle3Party = new Party([new UncodedOne()]) { PartyType = PartyType.Villian
+, Items = [new HealthPotion()]};
+//var battle3Party = new Party([new StoneAmarok()]) { PartyType = PartyType.Villian };
 
 
 var player2 = new Player(

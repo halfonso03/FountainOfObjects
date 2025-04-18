@@ -1,6 +1,7 @@
 ﻿
 using TheFinalBattle.Actions;
 using TheFinalBattle.Actions.AttackActions;
+using TheFinalBattle.Actions.AttackModifiers;
 
 namespace TheFinalBattle.Characters;
 
@@ -14,7 +15,7 @@ public class HeroCharacter : Character
     public override CharacterAction StandardAttack => Actions[1];
     public override int InitialHP { get; } = 25;
     public override int MaximumHP { get; } = 25;
-    public override IAttackModifier? AttackModifier { get; set; } = null;
+    public override IDefenseModifier? DefenseModifier { get; set; } = null;
     public HeroCharacter(int HP = 0)
     {
         if (HP == 0)

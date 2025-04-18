@@ -16,17 +16,29 @@ public class GearAttackAction : AttackAction
 
     public override DamageInfo DamageToInflict()
     {
-        var damageInfo = new DamageInfo();
+        var damageInfo = new DamageInfo() { DamageDealtSource = _gear.DamageDealtSource };
 
-        if (GetAttackSuccessProbability() == 1)
+        if (_gear.DamageDealtSource == DamageDealtSource.StandardProbabilityCalculation)
+        {
+            if (GetSuccessProbability(ProbabilityOfSuccess) == 1)
+            {
+                damageInfo.InflictedDamage = _gear.DamageDealt;
+            }
+            else
+            {
+                damageInfo.AttackMissed = true;
+            }
+        }
+        else  if (_gear.DamageDealtSource == DamageDealtSource.Custom)
         {
             damageInfo.InflictedDamage = _gear.DamageDealt;
-        }
-        else
-        {
-            damageInfo.AttackMissed = true;
-        }
 
+            if (damageInfo.InflictedDamage == 0)
+            {
+                damageInfo.AttackMissed = true;
+            }
+        }        
+        
         return damageInfo;
     }
 }

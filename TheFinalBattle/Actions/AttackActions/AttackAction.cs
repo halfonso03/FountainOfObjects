@@ -6,40 +6,51 @@ namespace TheFinalBattle.Actions.AttackActions;
 
 public abstract class AttackAction : CharacterAction
 {
+    public virtual int ProbabilityOfSuccess { get; } = 90;
     public abstract DamageInfo DamageToInflict();
-    public virtual DamageType DamageType { get; } = DamageType.Normal;
+    public virtual DamageType DamageTypeInflicted { get; } = DamageType.Normal;
     public virtual AttackData PerformAttack(Character attacker, Character target)
     {
         DamageInfo damageInfo = DamageToInflict();
 
-        damageInfo.AttackerDamageType = DamageType;
-        damageInfo.DefenderDamageTypeModifier = target.AttackModifier?.DefendsDamageType;
+        damageInfo.AttackerDamageType = DamageTypeInflicted;
+        damageInfo.DefenderDamageType = target.DefenseModifier?.DefendsFromDamageType;
 
-        if (target.AttackModifier?.DefendsDamageType == this.DamageType)
+        if (target.DefenseModifier?.DefendsFromDamageType == this.DamageTypeInflicted)
         {
-            if (!damageInfo.AttackMissed)
+            if (!damageInfo.AttackMissed && damageInfo.InflictedDamage > 0)
             {
-                damageInfo.InflictedDamage += target.AttackModifier.ModifyBy;
-            }            
+                damageInfo.InflictedDamage += target.DefenseModifier!.ModifyBy;
+                if (damageInfo.InflictedDamage < 0) damageInfo.InflictedDamage = 0;
+            }         
+        }
+        else
+        {
+
         }
 
-        if (damageInfo.InflictedDamage.HasValue)
+        if (damageInfo.InflictedDamage.HasValue && damageInfo.InflictedDamage.Value != 0)
         {
-            target.DecreaseHealthBy(damageInfo.InflictedDamage!.Value);
+            var newHealth = target.GetProposedNewHealth(damageInfo.InflictedDamage!.Value);
+
+            if (newHealth > target.InitialHP)
+            {
+                target.RestoreFullHealth();
+            }
+            else
+            {
+                target.SetHealth(newHealth);                
+            }
+
         }
         
 
         return new AttackData() { DamageInfo = damageInfo };        
     }
 
-    public static double GetAttackSuccessProbability(int percentChance = 70)
+    public static double GetSuccessProbability(int percentChance)
     {
         var random = new Random((int)DateTime.Now.Ticks);
-        //var id = random.Next(0, 3);
-
-        //if (id == NO_DAMAGE) return NO_DAMAGE;
-        //if (id == FULL_DAMAGE) return FULL_DAMAGE;
-
 
         int j = 0;
         for (var i = 1; i < 101; i++)
