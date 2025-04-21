@@ -24,4 +24,6 @@ public class DamageInfo
     public DamageType AttackerDamageType { get; internal set; }
     public DamageType? DefenderDamageType { get; internal set; }
     public DamageDealtSource DamageDealtSource { get; internal set; }
+    public int StrikeCount { get; set; } = 1;
+    public bool DefenseModifierUsed { get; internal set; } = false;
 }

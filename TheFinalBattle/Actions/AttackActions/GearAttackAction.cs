@@ -4,6 +4,8 @@ namespace TheFinalBattle.Actions.AttackActions;
 
 public class GearAttackAction : AttackAction
 {
+    public GearAttackAction? AdditionalGearAttackAction { get; set; }
+
     private readonly Gear _gear;
 
     public override string Name { get; }
@@ -18,26 +20,33 @@ public class GearAttackAction : AttackAction
     {
         var damageInfo = new DamageInfo() { DamageDealtSource = _gear.DamageDealtSource };
 
-        if (_gear.DamageDealtSource == DamageDealtSource.StandardProbabilityCalculation)
-        {
-            if (GetSuccessProbability(ProbabilityOfSuccess) == 1)
-            {
-                damageInfo.InflictedDamage = _gear.DamageDealt;
-            }
-            else
-            {
-                damageInfo.AttackMissed = true;
-            }
-        }
-        else  if (_gear.DamageDealtSource == DamageDealtSource.Custom)
-        {
-            damageInfo.InflictedDamage = _gear.DamageDealt;
+        damageInfo.InflictedDamage = _gear.GetDamageDealt();
 
-            if (damageInfo.InflictedDamage == 0)
-            {
-                damageInfo.AttackMissed = true;
-            }
-        }        
+        if (damageInfo.InflictedDamage == 0)
+        {
+            damageInfo.AttackMissed = true;
+        }
+
+        //if (_gear.DamageDealtSource == DamageDealtSource.DefaultProbability)
+        //{
+        //    if (GetSuccessProbability(ProbabilityOfSuccess) == 1)
+        //    {
+        //        damageInfo.InflictedDamage = _gear.DamageDealt;
+        //    }
+        //    else
+        //    {
+        //        damageInfo.AttackMissed = true;
+        //    }
+        //}
+        //else  if (_gear.DamageDealtSource == DamageDealtSource.Custom)
+        //{
+        //    damageInfo.InflictedDamage = _gear.DamageDealt;
+
+        //    if (damageInfo.InflictedDamage == 0)
+        //    {
+        //        damageInfo.AttackMissed = true;
+        //    }
+        //}        
         
         return damageInfo;
     }

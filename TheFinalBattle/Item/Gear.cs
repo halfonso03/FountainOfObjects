@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,13 +9,16 @@ using TheFinalBattle.Characters;
 
 namespace TheFinalBattle.Item
 {
-    public abstract class Gear
+    public abstract class Gear 
     {
+        protected string _internalId = Guid.NewGuid().ToString();
         public abstract string Name { get; }
         public abstract string AttackName { get; }
         public bool Equipped { get; set; } = false;
-        public abstract int DamageDealt { get; }
+        public abstract int GetDamageDealt();
         public Character? EquippedCharacter { get; set; }
+        public virtual bool Pairable => false;
+        public Gear? PairedGear { get; internal set; }
         protected Gear() { }        
         public Gear(Character character)
         {
@@ -31,15 +35,19 @@ namespace TheFinalBattle.Item
 
                 if (equippedGear.EquippedCharacter is not null)
                 {
+                    equippedGear.EquippedCharacter.EquippedGearItems.Remove(equippedGear);
                     equippedGear.EquippedCharacter.EquippedGear = null;
                     equippedGear.EquippedCharacter = null;
                 }
+
+                
             }            
         }
 
-        public virtual DamageDealtSource DamageDealtSource { get; set; } = DamageDealtSource.StandardProbabilityCalculation;
+        public virtual DamageDealtSource DamageDealtSource { get; set; } = DamageDealtSource.DefaultProbability;
+        
 
-        protected static int CalculatedDamageByProbability(int percentChange = 92, int defaultDamage = 1)
+        protected static int DamageByPercentChanceOfSuccess(int percentChange = 92, int defaultDamage = 1)
         {
             var damageInfo = new DamageInfo();
 
@@ -59,56 +67,73 @@ namespace TheFinalBattle.Item
                 damageInfo.InflictedDamage = defaultDamage;
             }
 
+            damageInfo.AttackMissed = damageInfo.InflictedDamage is null;
+
             return damageInfo.InflictedDamage ?? 0;
         }
+
+        public override string ToString() => _internalId;
     }
 
     public class Dagger : Gear
     {
         public override string Name { get; } = "Dagger";
+        
+        public override int GetDamageDealt() => GetDamage();
 
-        public override int DamageDealt { get; } = 1;
+        private int GetDamage()
+        {
+            int damage = 1;         
 
-        public override string AttackName { get; } = "STAB";        
+            return damage;
+        }
 
+        public override string AttackName { get; } = "STAB";
+
+        public override bool Pairable => true;
+        
         public Dagger(Character character) : base(character) { }
         
         public Dagger() { }
+
+        
+
+
     }
 
-    public class Sword : Gear
+    public class BroadSword : Gear
     {
-        public override string Name { get; } = "Sword";        
+        public override string Name { get; } = "Broad Sword";        
 
         public override string AttackName { get; } = "SLASH";
 
-        public Sword() { }
+        public BroadSword() { }
 
-        public Sword(Character character) : base(character) { }
+        public BroadSword(Character character) : base(character) { }
 
         public override DamageDealtSource DamageDealtSource => DamageDealtSource.Custom;
 
-        public override int DamageDealt => Gear.CalculatedDamageByProbability(98, 2);
+        public override int GetDamageDealt() => Gear.DamageByPercentChanceOfSuccess(95, 4);
     }
 
     public class Hammer : Gear
     {
-        public override string Name { get; } = "Hammer";
-
-        public override int DamageDealt { get; } = 2;
+        public override string Name { get; } = "Hammer";        
 
         public override string AttackName { get; } = "SMASH";
 
         public Hammer() { }
 
         public Hammer(Character character) : base(character) { }
+
+        public override int GetDamageDealt() => Gear.DamageByPercentChanceOfSuccess(90, 3);
     }
 
     public class Bow : Gear
     {
         public override string Name { get; } = "Bow";
 
-        public override int DamageDealt { get; } = 3;
+        public override int GetDamageDealt() => Gear.DamageByPercentChanceOfSuccess(80, 3);
 
         public override string AttackName { get; } = "QUICK SHOT";
 
@@ -126,7 +151,7 @@ namespace TheFinalBattle.Item
 
         public override DamageDealtSource DamageDealtSource => DamageDealtSource.Custom;
 
-        public override int DamageDealt => Gear.CalculatedDamageByProbability(90, 3);
+        public override int GetDamageDealt() => Gear.DamageByPercentChanceOfSuccess(80, 5);
     }
 
     public class FlamingSword : Gear
@@ -141,13 +166,13 @@ namespace TheFinalBattle.Item
 
         public override DamageDealtSource DamageDealtSource => DamageDealtSource.Custom;
 
-        public override int DamageDealt => Gear.CalculatedDamageByProbability(91, 4);
+        public override int GetDamageDealt() => DamageByPercentChanceOfSuccess(80, 6);
     }
 }
 
 
 public enum DamageDealtSource
 {
-    StandardProbabilityCalculation,
+    DefaultProbability,
     Custom
 }

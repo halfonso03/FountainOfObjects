@@ -17,6 +17,7 @@ public abstract class Character
     public abstract int MaximumHP { get; }
     protected internal int CurrentHealth { get; protected set; }
     public Gear? EquippedGear { get; set; }
+    public List<Gear> EquippedGearItems { get; set; } = [];
     public abstract IDefenseModifier? DefenseModifier { get; set; }
     public MenuItem[] GetStandardAttackMenuOptions()
     {
@@ -64,5 +65,14 @@ public abstract class Character
     internal void SetHealth(int newHealth)
     {
         CurrentHealth = newHealth;
+    }
+
+    internal void EquipGear(Gear gear)
+    {
+        if (EquippedGearItems.Count() > 2)
+        {
+            throw new Exception("Cant equip more than two");
+        }
+        EquippedGearItems.Add(gear);
     }
 }

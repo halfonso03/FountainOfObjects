@@ -1,4 +1,5 @@
-﻿using TheFinalBattle.Actions;
+﻿using System.ComponentModel.DataAnnotations;
+using TheFinalBattle.Actions;
 using TheFinalBattle.Actions.AttackActions;
 using TheFinalBattle.Characters;
 using TheFinalBattle.Item;
@@ -54,6 +55,7 @@ public class Party : IParty
             {
                 c.EquippedGear.Equipped = true; 
                 AttackGear.Add(c.EquippedGear);
+                c.EquippedGearItems.Add(c.EquippedGear);
             }
         }
     }
@@ -111,14 +113,60 @@ public class Party : IParty
                     new MenuItem(i + startIndex, item.Name, true, new GearEquipAction(item)));
     }
 
+
     public MenuItem? GetEquippedGearAttackOption(Character character, int startIndex = 1)
     {
-        return AttackGear
-            .Where(x => x.Equipped && x.EquippedCharacter == character)
-            .Select((item, i) =>
-                new MenuItem(i + startIndex, item.Name, true, new GearAttackAction(item)))
-             .SingleOrDefault();
+        var m = from eg in character.EquippedGearItems
+                group eg by eg.Name into grp
+                select grp;
+
+        if (character.EquippedGearItems.Count() > 0)
+        {
+            var firstGear = m.First().First();
+
+
+            var menu = new MenuItem(startIndex, "", true, new GearAttackAction(firstGear));
+
+            if (firstGear.PairedGear is not null)
+            {
+                var gearAttackAction = menu.Action as GearAttackAction;
+                gearAttackAction!.AdditionalGearAttackAction = new GearAttackAction(firstGear.PairedGear);
+            }
+
+            return menu;
+        }
+
+        return null;       
+
+       
+            //var menuItem = AttackGear
+            //    .Where(x => x.Equipped && x.EquippedCharacter == character)
+            //    .Select((item, i) =>
+            //        new MenuItem(i + startIndex, item.Name, true, new GearAttackAction(item)))
+            //     .SingleOrDefault();
+
+            //return menuItem;
+        
+
+
+
+
+        
+
+        //return m.First();
     }
+
+    //public MenuItem? GetEquippedGearAttackOption(Character character, int startIndex = 1)
+    //{
+
+    //    var menuItem = AttackGear
+    //        .Where(x => x.Equipped && x.EquippedCharacter == character)
+    //        .Select((item, i) =>
+    //            new MenuItem(i + startIndex, item.Name, true, new GearAttackAction(item)))
+    //         .SingleOrDefault();
+
+
+    //}
 
     public void AddItems(List<IItem> items)
     {

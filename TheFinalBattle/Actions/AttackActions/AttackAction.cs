@@ -22,12 +22,10 @@ public abstract class AttackAction : CharacterAction
             {
                 damageInfo.InflictedDamage += target.DefenseModifier!.ModifyBy;
                 if (damageInfo.InflictedDamage < 0) damageInfo.InflictedDamage = 0;
-            }         
+            }
+            damageInfo.DefenseModifierUsed = true;
         }
-        else
-        {
-
-        }
+       
 
         if (damageInfo.InflictedDamage.HasValue && damageInfo.InflictedDamage.Value != 0)
         {
@@ -48,9 +46,23 @@ public abstract class AttackAction : CharacterAction
         return new AttackData() { DamageInfo = damageInfo };        
     }
 
-    public static double GetSuccessProbability(int percentChance)
+
+    public static Random RandomGen = new Random(DateTime.Now.Millisecond);
+    public static double GetSuccessProbability(int percentChance = 70)
     {
-        var random = new Random((int)DateTime.Now.Ticks);
+        int success = 0;
+        int randomValueBetween0And99 = RandomGen.Next(100);
+        if (randomValueBetween0And99 > (100 - percentChance))
+        {
+            success = 1;
+        }
+
+        return success;
+    }
+
+    public static double _GetSuccessProbabilityNOTUSED(int percentChance)
+    {
+        var random = new Random();
 
         int j = 0;
         for (var i = 1; i < 101; i++)
