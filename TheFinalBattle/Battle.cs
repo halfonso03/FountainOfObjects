@@ -44,7 +44,7 @@ public class Battle
                 _attackingPlayer = _attackingPlayer == _player1 ? _player2 : _player1;
                 _defendingPlayer = _attackingPlayer == _player1 ? _player2 : _player1;
 
-                
+
 
                 if (_attackingPlayer.PlayerType == PlayerType.Computer)
                 {
@@ -63,8 +63,8 @@ public class Battle
                         ? attackingParty.GetNextAttackingCharacter()
                         : attackingParty.GetHealthiestCharacter();
 
-                
-                
+
+
 
 
                 if (defendingCharacter is null)
@@ -80,7 +80,7 @@ public class Battle
                         {
                             defendingCharacter = healthiest;
                         }
-                    }                    
+                    }
                 }
 
 
@@ -88,27 +88,16 @@ public class Battle
 
 
 
-
-                optionCount = GetActions(attackingParty, 
-                    optionCount, 
-                    attackingCharacter, 
-                    out MenuItem[] attackOptions, 
-                    out MenuItem? gearAttackOption, 
-                    out IEnumerable<MenuItem> itemActionsOptions, 
+                optionCount = GetActions(attackingParty,
+                    optionCount,
+                    attackingCharacter,
+                    out MenuItem[] attackOptions,
+                    out MenuItem? gearAttackOption,
+                    out IEnumerable<MenuItem> itemActionsOptions,
                     out IEnumerable<MenuItem> unequippedGearActionOptions);
 
 
-                foreach (var option in attackOptions)
-                {
-                    if (attackingCharacter.StandardAttack == option.Action)
-                    {
-                        _userInteractor.WriteLine("\nAttacks:\n---------------------------------------");
-                    }
-
-                    _userInteractor.Write($"{option.Id} - ");
-                    _userInteractor.Write(attackingCharacter.StandardAttack == option.Action ? "" : option.Action.Name);
-                    _userInteractor.WriteLine($"{(attackingCharacter.StandardAttack == option.Action ? "Standard Attack (" + attackingCharacter.StandardAttack.Name + ")" : "")} ");
-                }
+                WriteStandardAttackOptions(attackingCharacter, attackOptions);
 
 
                 if (gearAttackOption is not null)
@@ -117,81 +106,15 @@ public class Battle
                 }
 
 
-
-                if (attackingParty.Items.Count > 0)
-                {
-                    _userInteractor.WriteLine("\nAvailable Items:\n---------------------------------------");
-
-                    foreach (var itemActionOption in itemActionsOptions)
-                    {
-                        if (_attackingPlayer.PlayerType == PlayerType.Computer && !willUsePotion
-                            && attackingCharacter.CurrentHealth <= attackingCharacter.MaximumHP * .2) // removed logic for every fourth turn
-                        {
-                            if (itemActionOption.Action is UseItemAction useItemAction)
-                            {
-                                if (useItemAction.Item is HealthPotion potion)
-                                {
-                                    willUsePotion = true;
-                                    computerPlayerPotionAction = (UseItemAction)itemActionOption.Action;
-                                }
-                            }
-                        }
-
-                        _userInteractor.WriteLine($"{itemActionOption.Id} - {itemActionOption.Action.Name}");
-                    }
-                }
+                GetPossibleComputerPlayerItemOptions(attackingParty, ref computerPlayerPotionAction, ref willUsePotion, attackingCharacter, itemActionsOptions);
 
 
-
-
-                if (unequippedGearActionOptions.Any())
-                {
-                    _userInteractor.WriteLine("\nAvailable Gear:\n---------------------------------------");
-
-                    foreach (var gearActionMenuOption in unequippedGearActionOptions)
-                    {
-                        _userInteractor.WriteLine($"{gearActionMenuOption.Id} - {gearActionMenuOption.Action.Name}");
-
-                        if (_attackingPlayer.PlayerType == PlayerType.Computer && !willUsePotion) // && computerRoundsPlayed % 2 == 0
-                        {
-                            if (attackingCharacter.EquippedGearItems.Count() == 0 && computerPlayerPotionAction is null)
-                            {
-                                var gearEquipAction = gearActionMenuOption.Action as GearEquipAction;
-
-                                computerPlayerGearEquipAction = gearEquipAction;
-
-                                var gear = gearEquipAction!.Gear;
-
-                                if (gearEquipAction!.Gear.Pairable)
-                                {
-                                    var pairingGearEquipAction = unequippedGearActionOptions
-                                            .Where(x => x.Action != gearActionMenuOption.Action)
-                                            .Select(x => (GearEquipAction)x.Action)
-                                            .Where(x => x.Gear.Pairable
-                                                    && !x.Gear.Equipped
-                                                    && x.Gear != gear
-                                                    && x.Gear.GetType() == gear.GetType())
-                                            .FirstOrDefault();
-
-                                    if (pairingGearEquipAction is not null)
-                                    {
-                                        computerPlayerGearEquipAction!.AdditionalGearEquipAction = pairingGearEquipAction;
-                                        gear.PairedGear = pairingGearEquipAction.Gear;
-                                        pairingGearEquipAction.Gear.PairedGear = gear;
-                                        break;
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-                }
-
+                computerPlayerGearEquipAction =
+                    WriteComputerPlayerGearAttackOptions(computerPlayerPotionAction, computerPlayerGearEquipAction, willUsePotion, attackingCharacter, unequippedGearActionOptions);
 
 
                 if (_attackingPlayer.PlayerType == PlayerType.Computer && gearAttackOption is not null)
                 {
-                    //if (attackingCharacter.EquippedGear is not null)
                     if (attackingCharacter.EquippedGearItems.Count() > 0)
                     {
                         computerPlayerGearAttackAction = gearAttackOption.Action as GearAttackAction;
@@ -200,51 +123,10 @@ public class Battle
 
 
                 _userInteractor.WriteLine("\nWhat do you want to do?");
-
-
-
-                if (computerPlayerPotionAction is not null &&
-                        _attackingPlayer.GetHealthRestoreCandidate() is not null)
-                {
-                    _userInteractor.WriteLine("\n--------------------------------------", TextColor.Magenta);
-                    _userInteractor.WriteLine("Computer auto-selected Health Potion!", TextColor.Magenta);
-                    _userInteractor.WriteLine("--------------------------------------\n", TextColor.Magenta);
-                    characterAction = computerPlayerPotionAction!;
-                }
-                else if (computerPlayerGearAttackAction is not null)
-                {
-                    characterAction = computerPlayerGearAttackAction;
-                }
-                else if (computerPlayerGearEquipAction is not null)
-                {
-                    characterAction = computerPlayerGearEquipAction;
-                }
-                else if (_attackingPlayer.PlayerType == PlayerType.Computer)
-                {
-                    characterAction = attackingCharacter.StandardAttack;
-                }
-                else
-                {
-                    var humanAttackOptions = attackOptions;
-
-                    humanAttackOptions = humanAttackOptions.Union(itemActionsOptions).ToArray();
-
-                    if (gearAttackOption is not null)
-                    {
-                        MenuItem[] options = [gearAttackOption];
-
-                        humanAttackOptions = humanAttackOptions.Union(options).ToArray();
-
-                    }
-
-                    humanAttackOptions = humanAttackOptions.Union(unequippedGearActionOptions).ToArray();
-
-                    characterAction = characterAction = GetHumanPlayerAction(humanAttackOptions);
-                }
-
+                
+                characterAction = GetCharacterAction(computerPlayerPotionAction, computerPlayerGearEquipAction, computerPlayerGearAttackAction, attackingCharacter, attackOptions, gearAttackOption, itemActionsOptions, unequippedGearActionOptions);
 
                 PerformAction(characterAction, attackingCharacter, defendingCharacter);
-
 
 
                 if (defendingCharacter.CurrentHealth == 0)
@@ -265,20 +147,21 @@ public class Battle
 
                 Thread.Sleep(200);
                 _userInteractor.WriteLine("**************** ATTACK RESULT ****************", TextColor.Red);
+                Thread.Sleep(200);
                 ShowGameStatus(enemyParty, round, attackingCharacter, defendingCharacter);
+                Thread.Sleep(200);
                 _userInteractor.WriteLine("***********************************************\n\n", TextColor.Red);
                 Thread.Sleep(400);
 
+
                 defendingCharacter = attackingCharacter;
 
-            
 
                 if (attackingParty.PartyType == PartyType.Villian)
                 {
-                    _userInteractor.WriteLine("Press enter to continue...", TextColor.White);                    
+                    _userInteractor.WriteLine("Press enter to continue...", TextColor.White);
                     Console.ReadLine();
                 }
-
             }
             while (enemyParty.CharacterCount > 0 && !heroLost);
 
@@ -306,6 +189,140 @@ public class Battle
         else
         {
             _userInteractor.WriteLine("The heroes have won");
+        }
+    }
+
+    private CharacterAction GetCharacterAction(UseItemAction? computerPlayerPotionAction, GearEquipAction? computerPlayerGearEquipAction, GearAttackAction? computerPlayerGearAttackAction, Character attackingCharacter, MenuItem[] attackOptions, MenuItem? gearAttackOption, IEnumerable<MenuItem> itemActionsOptions, IEnumerable<MenuItem> unequippedGearActionOptions)
+    {
+        CharacterAction characterAction;
+        if (computerPlayerPotionAction is not null &&
+                                _attackingPlayer.GetHealthRestoreCandidate() is not null)
+        {
+            _userInteractor.WriteLine("\n--------------------------------------", TextColor.Magenta);
+            _userInteractor.WriteLine("Computer auto-selected Health Potion!", TextColor.Magenta);
+            _userInteractor.WriteLine("--------------------------------------\n", TextColor.Magenta);
+            characterAction = computerPlayerPotionAction!;
+        }
+        else if (computerPlayerGearAttackAction is not null)
+        {
+            characterAction = computerPlayerGearAttackAction;
+        }
+        else if (computerPlayerGearEquipAction is not null)
+        {
+            characterAction = computerPlayerGearEquipAction;
+        }
+        else if (_attackingPlayer.PlayerType == PlayerType.Computer)
+        {
+            characterAction = attackingCharacter.StandardAttack;
+        }
+        else
+        {
+            var humanAttackOptions = attackOptions;
+
+            humanAttackOptions = humanAttackOptions.Union(itemActionsOptions).ToArray();
+
+            if (gearAttackOption is not null)
+            {
+                MenuItem[] options = [gearAttackOption];
+
+                humanAttackOptions = humanAttackOptions.Union(options).ToArray();
+
+            }
+
+            humanAttackOptions = humanAttackOptions.Union(unequippedGearActionOptions).ToArray();
+
+            characterAction = GetHumanPlayerAction(humanAttackOptions);
+        }
+
+        return characterAction;
+    }
+
+    private GearEquipAction? WriteComputerPlayerGearAttackOptions(UseItemAction? computerPlayerPotionAction, GearEquipAction? computerPlayerGearEquipAction, bool willUsePotion, Character attackingCharacter, IEnumerable<MenuItem> unequippedGearActionOptions)
+    {
+        if (unequippedGearActionOptions.Any())
+        {
+            _userInteractor.WriteLine("\nAvailable Gear:\n---------------------------------------");
+
+            foreach (var gearActionMenuOption in unequippedGearActionOptions)
+            {
+                _userInteractor.WriteLine($"{gearActionMenuOption.Id} - {gearActionMenuOption.Action.Name}");
+
+                if (_attackingPlayer.PlayerType == PlayerType.Computer && !willUsePotion) // && computerRoundsPlayed % 2 == 0
+                {
+                    if (attackingCharacter.EquippedGearItems.Count() == 0 && computerPlayerPotionAction is null)
+                    {
+                        var gearEquipAction = gearActionMenuOption.Action as GearEquipAction;
+
+                        computerPlayerGearEquipAction = gearEquipAction;
+
+                        var gear = gearEquipAction!.Gear;
+
+                        if (gearEquipAction!.Gear.Pairable)
+                        {
+                            var pairingGearEquipAction = unequippedGearActionOptions
+                                    .Where(x => x.Action != gearActionMenuOption.Action)
+                                    .Select(x => (GearEquipAction)x.Action)
+                                    .Where(x => x.Gear.Pairable
+                                            && !x.Gear.Equipped
+                                            && x.Gear != gear
+                                            && x.Gear.GetType() == gear.GetType())
+                                    .FirstOrDefault();
+
+                            if (pairingGearEquipAction is not null)
+                            {
+                                computerPlayerGearEquipAction!.AdditionalGearEquipAction = pairingGearEquipAction;
+                                gear.PairedGear = pairingGearEquipAction.Gear;
+                                pairingGearEquipAction.Gear.PairedGear = gear;
+                                break;
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+
+        return computerPlayerGearEquipAction;
+    }
+
+    private void GetPossibleComputerPlayerItemOptions(IParty attackingParty, ref UseItemAction? computerPlayerPotionAction, ref bool willUsePotion, Character attackingCharacter, IEnumerable<MenuItem> itemActionsOptions)
+    {
+        if (attackingParty.Items.Count > 0)
+        {
+            _userInteractor.WriteLine("\nAvailable Items:\n---------------------------------------");
+
+            foreach (var itemActionOption in itemActionsOptions)
+            {
+                if (_attackingPlayer.PlayerType == PlayerType.Computer && !willUsePotion
+                    && attackingCharacter.CurrentHealth <= attackingCharacter.MaximumHP * .2) // removed logic for every fourth turn
+                {
+                    if (itemActionOption.Action is UseItemAction useItemAction)
+                    {
+                        if (useItemAction.Item is HealthPotion potion)
+                        {
+                            willUsePotion = true;
+                            computerPlayerPotionAction = (UseItemAction)itemActionOption.Action;
+                        }
+                    }
+                }
+
+                _userInteractor.WriteLine($"{itemActionOption.Id} - {itemActionOption.Action.Name}");
+            }
+        }
+    }
+
+    private void WriteStandardAttackOptions(Character attackingCharacter, MenuItem[] attackOptions)
+    {
+        foreach (var option in attackOptions)
+        {
+            if (attackingCharacter.StandardAttack == option.Action)
+            {
+                _userInteractor.WriteLine("\nAttacks:\n---------------------------------------");
+            }
+
+            _userInteractor.Write($"{option.Id} - ");
+            _userInteractor.Write(attackingCharacter.StandardAttack == option.Action ? "" : option.Action.Name);
+            _userInteractor.WriteLine($"{(attackingCharacter.StandardAttack == option.Action ? "Standard Attack (" + attackingCharacter.StandardAttack.Name + ")" : "")} ");
         }
     }
 

@@ -51,8 +51,9 @@ public class BattleRunner
         //var battle1Amarok1 = new StoneAmarok();
         var dagger1 = new Dagger();
         var dagger2 = new Dagger();
-        var dagger3 = new Dagger(battle1Skeleton2);
+        //var dagger3 = new Dagger(battle1Skeleton2);
         var hammer = new Hammer();
+        var hammer2 = new Hammer();
 
 
 
@@ -61,8 +62,8 @@ public class BattleRunner
             PartyType = PartyType.Villian,
             Items = [new HealthPotion()]
         };
-        battle1Party.AttackGear.Add(dagger1);
-        battle1Party.AttackGear.Add(dagger2);
+        battle1Party.AttackGear.Add(hammer2);
+        battle1Party.AttackGear.Add(hammer);
         
 
 

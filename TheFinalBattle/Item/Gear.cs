@@ -124,7 +124,8 @@ namespace TheFinalBattle.Item
 
         public Hammer(Character character) : base(character) { }
 
-        public override int GetDamageDealt() => Gear.DamageByPercentChanceOfSuccess(90, 3);
+        public override int GetDamageDealt() => Gear.DamageByPercentChanceOfSuccess(80, 5);
+        public override bool Pairable => true;
     }
 
     public class Bow : Gear
