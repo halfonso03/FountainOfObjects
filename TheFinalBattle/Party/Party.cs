@@ -23,6 +23,7 @@ public interface IParty
     IEnumerable<Gear> GetEquippedGear();
     Character GetNextAttackingCharacter();
     Character GetCurrentAttackingCharacter();
+    Character GetHealthiestCharacter();
 }
 
 
@@ -48,6 +49,7 @@ public class Party : IParty
     public Party(List<Character> characters)
     {
         _characters = characters;
+        int count = 1;
         foreach (var c in _characters)
         {
             c.Party = this;
@@ -57,6 +59,8 @@ public class Party : IParty
                 AttackGear.Add(c.EquippedGear);
                 c.EquippedGearItems.Add(c.EquippedGear);
             }
+            c.Id = count;
+            count++;
         }
     }
 
@@ -66,7 +70,7 @@ public class Party : IParty
     {
         if (enemyCharacter.EquippedGear is not null)
         {            
-            Gear.UnequipCharacter(enemyCharacter?.EquippedGear);
+            Gear.UnequipFromCharacter(enemyCharacter?.EquippedGear);
         }
         _characters.Remove(enemyCharacter);
         
@@ -137,23 +141,6 @@ public class Party : IParty
         }
 
         return null;       
-
-       
-            //var menuItem = AttackGear
-            //    .Where(x => x.Equipped && x.EquippedCharacter == character)
-            //    .Select((item, i) =>
-            //        new MenuItem(i + startIndex, item.Name, true, new GearAttackAction(item)))
-            //     .SingleOrDefault();
-
-            //return menuItem;
-        
-
-
-
-
-        
-
-        //return m.First();
     }
 
     //public MenuItem? GetEquippedGearAttackOption(Character character, int startIndex = 1)
@@ -199,5 +186,12 @@ public class Party : IParty
     public Character GetCurrentAttackingCharacter()
     {
         return _currentAttackingCharacter;
+    }
+
+    public Character GetHealthiestCharacter()
+    {
+        Character healthiest = _characters.MaxBy(x => x.CurrentHealth);
+
+        return healthiest;
     }
 }

@@ -27,7 +27,7 @@ namespace TheFinalBattle.Item
             Equipped = true;
         }
        
-        internal static void UnequipCharacter(Gear? equippedGear)
+        internal static void UnequipFromCharacter(Gear? equippedGear)
         {
             if (equippedGear is not null)
             {
@@ -39,8 +39,6 @@ namespace TheFinalBattle.Item
                     equippedGear.EquippedCharacter.EquippedGear = null;
                     equippedGear.EquippedCharacter = null;
                 }
-
-                
             }            
         }
 

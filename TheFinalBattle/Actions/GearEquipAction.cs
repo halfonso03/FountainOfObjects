@@ -18,80 +18,47 @@ public class GearEquipAction : CharacterAction
 
     public Gear Gear { get => _gear; }
 
-    public override string Name
-    {
-        get
-        {
-            return $"Equip Gear ({_gear.Name})";
-        }
-        
-    }
+    public override string Name => $"Equip Gear ({_gear.Name})";
+
 
     public GeareEquipActionResult EquipGear(Character character)
     {
 
         var gearCount = character.EquippedGearItems.Count;
-
-        if (gearCount == 0)
+        _gear.Equipped = true;
+        
+        if (gearCount == 1)
         {
-            _gear.Equipped = true;
+            var currentEquippedGear = character.EquippedGearItems[0];
 
-            character.EquipGear(_gear);
-
-            _gear.EquippedCharacter = character;
-        }        
-        else if (gearCount == 1)
-        {
-            var currentGear = character.EquippedGearItems[0];
-
-            if (currentGear.Pairable && _gear.Pairable)
-            {
-                _gear.Equipped = true;
-
-                character.EquipGear(_gear);
-
-                _gear.EquippedCharacter = character;
-
-                currentGear.PairedGear = _gear;
-                _gear.PairedGear = currentGear;
+            if (currentEquippedGear.Pairable && _gear.Pairable)
+            {                
+                currentEquippedGear.PairedGear = _gear;
+                _gear.PairedGear = currentEquippedGear;
             }
             else
             {
-                Gear.UnequipCharacter(currentGear);
-
-                _gear.Equipped = true;
-
-                character.EquipGear(_gear);
-
-                _gear.EquippedCharacter = character;
+                Gear.UnequipFromCharacter(currentEquippedGear);
             }
         }
-        else
-        {
-            var equippedGear = character.EquippedGearItems;
-
-            equippedGear.ForEach(g => { g.EquippedCharacter = null; g.Equipped = false; g.PairedGear = null; });
+        else if (gearCount > 1)
+        {            
+            character.EquippedGearItems.ForEach(g => { g.EquippedCharacter = null; g.Equipped = false; g.PairedGear = null; });
             character.EquippedGearItems.RemoveAll(x => 1 == 1);
-            
-            _gear.Equipped = true;
-
-            character.EquipGear(_gear);
-
-            _gear.EquippedCharacter = character;
+                     
         }
 
+        _gear.EquippedCharacter = character;
+        character.EquipGear(_gear);
+
+
+        // applies to the computer player only
         if (AdditionalGearEquipAction is not null)
         {
             GearActionCompile(AdditionalGearEquipAction.EquipGear(character));
         }
 
-
-
-
-        var actionResult = new GeareEquipActionResult() { EquippedGear = Gear };
-
-        return actionResult;
-        
+        return new GeareEquipActionResult() { EquippedGear = Gear };        
     }
 
     public static void GearActionCompile(GeareEquipActionResult actionResult)
@@ -103,28 +70,6 @@ public class GearEquipAction : CharacterAction
         }
         CompiledGear[actionResult.EquippedGear.Name] = ++value;
     }
-
-    //public void EquipGear_OLD(Character character)
-    //{
-    //    _gear.Equipped = true;
-
-    //    if (character.EquippedGear is not null)
-    //    {
-    //        character.EquippedGear.Equipped = false;
-    //    }
-
-    //    character.EquippedGear = _gear;
-
-
-    //    character.EquipGear(_gear);
-
-    //    _gear.EquippedCharacter = character;
-
-    //    if (this.AdditionalGearEquipAction is not null)
-    //    {
-    //        AdditionalGearEquipAction.EquipGear(character);
-    //    }
-    //}
 
     public override string ToString() => _internalId;
 }

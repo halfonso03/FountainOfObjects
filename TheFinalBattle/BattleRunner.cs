@@ -1,34 +1,109 @@
-﻿using TheFinalBattle.Characters;
+﻿using TheFinalBattle.Actions.AttackModifiers;
+using TheFinalBattle.Characters;
+using TheFinalBattle.Item;
 using TheFinalBattle.Player;
 
 public class BattleRunner
 {
     private IUserInteractor _userInteractor;
-    private Player _player1;
-    private Player _player2;
+    private IPlayer _player1;
+    private IPlayer _player2;
  
-    public BattleRunner(Player player1, Player player2, IUserInteractor userInteractor)
-    {
-        _player1 = player1;        
-        _player2 = player2; 
+    public BattleRunner(IUserInteractor userInteractor)
+    {   
         _userInteractor = userInteractor;
     }
+
 
     public void Run()
     {
         GameMode gameMode = GetGameMode();
 
-        GetHeroName();
+        _player1 = SetUpHumanPlayer("Player 1");
 
-        SetPlayer1Type(gameMode, ref _player1);
+        GetHerosNames(gameMode, _player1);
 
-        SetPlayer2Type(gameMode, ref _player2);
+        if (gameMode == GameMode.Player_vs_Computer)
+        {
+            _player2 = SetupComputerPlayer(); 
+        }
+        else if (gameMode == GameMode.Player_vs_Player)
+        {            
+            _player2 = SetUpHumanPlayer("Player 2");
+            GetHerosNames(gameMode, _player2);
+        }
+        else
+        {
+            _player2 = SetupComputerPlayer();
+        }
 
+        
 
         new Battle(_player1, _player2, _userInteractor).Play();
     }
 
-    private void SetPlayer2Type(GameMode gameMode, ref Player player)
+    private IPlayer SetupComputerPlayer()
+    {
+
+        //battle 1 party setup
+        var battle1Skeleton1 = new Skeleton();
+        var battle1Skeleton2 = new Skeleton();
+        //var battle1Amarok1 = new StoneAmarok();
+        var dagger1 = new Dagger();
+        var dagger2 = new Dagger();
+        var dagger3 = new Dagger(battle1Skeleton2);
+        var hammer = new Hammer();
+
+
+
+        var battle1Party = new Party([battle1Skeleton1, battle1Skeleton2])
+        {
+            PartyType = PartyType.Villian,
+            Items = [new HealthPotion()]
+        };
+        battle1Party.AttackGear.Add(dagger1);
+        battle1Party.AttackGear.Add(dagger2);
+        
+
+
+        // battle 2 party setup
+        var battle2Skeleton1 = new Skeleton();
+        var battle2Skeleton1Dagger = new Dagger(battle2Skeleton1);
+        var battle2Skeleton2 = new Skeleton();
+        var battle2Skeleton2Dagger = new Dagger();
+
+        var battle2Party = new Party(
+            [
+                battle2Skeleton1,
+                battle2Skeleton2
+            ])
+        {
+            PartyType = PartyType.Villian,
+            Items = [new HealthPotion()]
+        };
+
+
+
+        // battle 3 party setup
+        var battle3Party = new Party(
+            [new UncodedOne()])
+        {
+            PartyType = PartyType.Villian,
+            Items = [new HealthPotion()]
+        };
+        //var battle3Party = new Party([new StoneAmarok()]) { PartyType = PartyType.Villian };
+
+
+        return new Player(
+            [
+                battle1Party,
+                battle2Party,
+                battle3Party
+            ])
+        { PlayerType = PlayerType.Computer };
+    }
+
+    private void SetPlayer2Type(GameMode gameMode, ref IPlayer player)
     {
         player.PlayerType = gameMode switch
         {
@@ -38,7 +113,7 @@ public class BattleRunner
         };
     }
 
-    private void SetPlayer1Type(GameMode gameMode, ref Player player)
+    private void SetPlayer1Type(GameMode gameMode, ref IPlayer player)
     {
         player.PlayerType = gameMode switch
         {
@@ -48,9 +123,9 @@ public class BattleRunner
         };
     }
 
-    private void GetHeroName()
+    private void GetHerosNames(GameMode gameMode, IPlayer player)
     {
-        foreach (var party in _player1.Parties.Union(_player2.Parties))
+        foreach (var party in player.Parties)
         {
             foreach (var character in party.GetCharacters())
             {
@@ -59,7 +134,7 @@ public class BattleRunner
                     string heroName = "";
                     do
                     {
-                        _userInteractor.WriteLine($"Enter the hero's name ({character.Label}):");
+                        _userInteractor.WriteLine($"Enter the hero's name ({character.Label}) ({player.Name}):");
                         heroName = _userInteractor.GetUserInput();
                     }
                     while (string.IsNullOrEmpty(heroName));
@@ -100,5 +175,40 @@ public class BattleRunner
         while (mode == GameMode.None);
 
         return mode;
+    }
+
+
+    IPlayer SetUpHumanPlayer(string playerName)
+    {
+        var trueProgrammer = new HeroCharacter()
+        {
+            Label = "The True Programmer",
+            DefenseModifier = new ObjectSightAttackModifier()
+        };
+        var vinFletcher = new HeroCharacter(15) { Label = "Vin Fletcher" };
+
+        var heroSword = new BroadSword(trueProgrammer);
+        var flamingSword = new FlamingSword();
+        var heroDagger1 = new Dagger();
+        var heroDagger2 = new Dagger();
+        var bow = new Bow(vinFletcher);
+
+        var mylara = new HeroCharacter(12) { Label = "Skorin" };
+        //        var cOfc = new CanonOfConsolas(mylara);
+
+
+
+        var heroParty = new Party(
+                [trueProgrammer])
+        {
+            Items = [new HealthPotion(), new HealthPotion(), new HealthPotion()],
+            
+        };
+        //heroParty.AttackGear.Add(heroSword);
+        heroParty.AttackGear.Add(heroDagger1);
+        heroParty.AttackGear.Add(heroDagger2);
+
+
+        return new Player([heroParty]) { PlayerType = PlayerType.Human, Name = playerName };
     }
 }

@@ -8,6 +8,7 @@ namespace TheFinalBattle.Characters;
 
 public abstract class Character
 {
+    public int Id { get;set; }
     public abstract CharacterAction[] Actions { get; init; }
     public abstract string Name { get; set; }
     public abstract string Label { get; set; }

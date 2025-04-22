@@ -4,6 +4,7 @@ namespace TheFinalBattle.Player;
 
 public interface IPlayer
 {
+    string Name { get; set; }
     IParty[] Parties { get; init; }
     PlayerType PlayerType { get; set; }
     Character? GetHealthRestoreCandidate();
@@ -13,6 +14,8 @@ public class Player : IPlayer
 {
     public IParty[] Parties { get; init; }
     public PlayerType PlayerType { get; set; } = PlayerType.Computer;
+    public string Name { get; set; }
+
     public Player(IParty[] parties)
     {
         Parties = parties;

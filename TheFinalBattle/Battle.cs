@@ -7,11 +7,12 @@ using TheFinalBattle.Player;
 public class Battle
 {   
     private IUserInteractor _userInteractor;
-    private Player _player1;
-    private Player _player2;
-    private Player _attackingPlayer;
+    private IPlayer _player1;
+    private IPlayer _player2;
+    private IPlayer _attackingPlayer;
+    private IPlayer _defendingPlayer;
 
-    public Battle(Player player1, Player player2, IUserInteractor userInteractor)
+    public Battle(IPlayer player1, IPlayer player2, IUserInteractor userInteractor)
     {
         _player1 = player1;
         _player2 = player2;        
@@ -27,69 +28,74 @@ public class Battle
         var heroLost = false;
         int round = 1;
 
-        foreach (var villainParty in _player2.Parties)
+        foreach (var enemyParty in _player2.Parties)
         {
             UseItemAction? computerPlayerPotionAction = default;
             GearEquipAction? computerPlayerGearEquipAction = default;
             GearAttackAction? computerPlayerGearAttackAction = default;
 
+            Character? defendingCharacter = null;
+
             do
             {
                 bool willUsePotion = false;
+                var optionCount = 0;
 
                 _attackingPlayer = _attackingPlayer == _player1 ? _player2 : _player1;
-                var defendingPlayer = _attackingPlayer == _player1 ? _player2 : _player1;
+                _defendingPlayer = _attackingPlayer == _player1 ? _player2 : _player1;
 
-
+                
 
                 if (_attackingPlayer.PlayerType == PlayerType.Computer)
                 {
                     computerRoundsPlayed++;
-                    attackingParty = villainParty;
+                    attackingParty = enemyParty;
                 }
                 else
                 {
                     attackingParty = _attackingPlayer.Parties[0];
                 }
 
-                defendingParty = defendingPlayer.Parties.Where(x => x.CharacterCount > 0).First();
+                defendingParty = _defendingPlayer.Parties.Where(x => x.CharacterCount > 0).First();
 
 
                 var attackingCharacter = attackingParty.PartyType == PartyType.Hero
                         ? attackingParty.GetNextAttackingCharacter()
-                        : attackingParty.GetCharacterAt(0);
+                        : attackingParty.GetHealthiestCharacter();
+
+                
+                
 
 
-                var defendingCharacter = defendingParty.PartyType == PartyType.Hero
-                        ? defendingParty.GetCurrentAttackingCharacter()
-                        : defendingParty.GetCharacterAt(0);
-               
-
-                ShowGameStatus(villainParty, round);
-
-                _userInteractor.WriteLine($"It is {attackingCharacter.Name} ({attackingCharacter.Label})'s turn...choose an option");
-                _userInteractor.WriteLine("========================================================================", TextColor.Blue);
-
-
-
-                var optionCount = 0;
-                var attackOptions = attackingCharacter.GetStandardAttackMenuOptions();
-                optionCount += attackOptions.Length;
-
-
-                var gearAttackOption = attackingParty.GetEquippedGearAttackOption(attackingCharacter, optionCount + 1);
-                if (gearAttackOption is not null)
+                if (defendingCharacter is null)
                 {
-                    optionCount++;
+                    defendingCharacter = defendingParty.GetCharacterAt(0);
+                }
+                else
+                {
+                    if (_defendingPlayer.PlayerType == PlayerType.Computer)
+                    {
+                        var healthiest = defendingParty.GetHealthiestCharacter();
+                        if (defendingCharacter.CurrentHealth < healthiest.CurrentHealth)
+                        {
+                            defendingCharacter = healthiest;
+                        }
+                    }                    
                 }
 
-                var itemActionsOptions = attackingParty.GetAvailableItemActionsMenu(optionCount + 1);
-                optionCount += itemActionsOptions.Count();
 
-                var unequippedGearActionOptions = attackingParty.GetEquippableGearMenu(optionCount + 1);
-                optionCount += unequippedGearActionOptions.Count();
+                ShowGameStatus(enemyParty, round, attackingCharacter, defendingCharacter);
 
 
+
+
+                optionCount = GetActions(attackingParty, 
+                    optionCount, 
+                    attackingCharacter, 
+                    out MenuItem[] attackOptions, 
+                    out MenuItem? gearAttackOption, 
+                    out IEnumerable<MenuItem> itemActionsOptions, 
+                    out IEnumerable<MenuItem> unequippedGearActionOptions);
 
 
                 foreach (var option in attackOptions)
@@ -107,10 +113,7 @@ public class Battle
 
                 if (gearAttackOption is not null)
                 {
-
-                    wrapper(gearAttackOption);
-
-                    
+                    WriteGearAttackOptions(gearAttackOption);
                 }
 
 
@@ -122,7 +125,7 @@ public class Battle
                     foreach (var itemActionOption in itemActionsOptions)
                     {
                         if (_attackingPlayer.PlayerType == PlayerType.Computer && !willUsePotion
-                            && attackingCharacter.CurrentHealth <= attackingCharacter.MaximumHP * .2 ) // removed logic for every fourth turn
+                            && attackingCharacter.CurrentHealth <= attackingCharacter.MaximumHP * .2) // removed logic for every fourth turn
                         {
                             if (itemActionOption.Action is UseItemAction useItemAction)
                             {
@@ -164,8 +167,8 @@ public class Battle
                                     var pairingGearEquipAction = unequippedGearActionOptions
                                             .Where(x => x.Action != gearActionMenuOption.Action)
                                             .Select(x => (GearEquipAction)x.Action)
-                                            .Where(x => x.Gear.Pairable 
-                                                    && !x.Gear.Equipped 
+                                            .Where(x => x.Gear.Pairable
+                                                    && !x.Gear.Equipped
                                                     && x.Gear != gear
                                                     && x.Gear.GetType() == gear.GetType())
                                             .FirstOrDefault();
@@ -203,7 +206,7 @@ public class Battle
                 if (computerPlayerPotionAction is not null &&
                         _attackingPlayer.GetHealthRestoreCandidate() is not null)
                 {
-                    _userInteractor.WriteLine("--------------------------------------", TextColor.Magenta);
+                    _userInteractor.WriteLine("\n--------------------------------------", TextColor.Magenta);
                     _userInteractor.WriteLine("Computer auto-selected Health Potion!", TextColor.Magenta);
                     _userInteractor.WriteLine("--------------------------------------\n", TextColor.Magenta);
                     characterAction = computerPlayerPotionAction!;
@@ -260,23 +263,35 @@ public class Battle
                 computerPlayerGearEquipAction = null;
                 computerPlayerGearAttackAction = null;
 
+                Thread.Sleep(200);
+                _userInteractor.WriteLine("**************** ATTACK RESULT ****************", TextColor.Red);
+                ShowGameStatus(enemyParty, round, attackingCharacter, defendingCharacter);
+                _userInteractor.WriteLine("***********************************************\n\n", TextColor.Red);
+                Thread.Sleep(400);
+
+                defendingCharacter = attackingCharacter;
+
+            
+
                 if (attackingParty.PartyType == PartyType.Villian)
                 {
-                    Console.WriteLine("Press enter to continue...");
+                    _userInteractor.WriteLine("Press enter to continue...", TextColor.White);                    
                     Console.ReadLine();
                 }
 
             }
-            while (villainParty.CharacterCount > 0 && !heroLost);
+            while (enemyParty.CharacterCount > 0 && !heroLost);
 
+
+            
             _userInteractor.WriteLine("\n----------------------------------------", TextColor.Magenta);
             _userInteractor.WriteLine("Enemy Party defeated!!!", TextColor.Magenta);
             _userInteractor.WriteLine("----------------------------------------\n", TextColor.Magenta);
 
             round++;
 
-            LootVillainItems(villainParty);
-            LootVillainGear(villainParty);
+            LootVillainItems(enemyParty);
+            LootVillainGear(enemyParty);
         }
 
 
@@ -294,21 +309,41 @@ public class Battle
         }
     }
 
+    private static int GetActions(IParty attackingParty, int optionCount, Character attackingCharacter, out MenuItem[] attackOptions, out MenuItem? gearAttackOption, out IEnumerable<MenuItem> itemActionsOptions, out IEnumerable<MenuItem> unequippedGearActionOptions)
+    {
+        attackOptions = attackingCharacter.GetStandardAttackMenuOptions();
+        optionCount += attackOptions.Length;
 
-    void wrapper(MenuItem m)
+
+        gearAttackOption = attackingParty.GetEquippedGearAttackOption(attackingCharacter, optionCount + 1);
+        if (gearAttackOption is not null)
+        {
+            optionCount++;
+        }
+
+        itemActionsOptions = attackingParty.GetAvailableItemActionsMenu(optionCount + 1);
+        optionCount += itemActionsOptions.Count();
+
+        unequippedGearActionOptions = attackingParty.GetEquippableGearMenu(optionCount + 1);
+        optionCount += unequippedGearActionOptions.Count();
+        return optionCount;
+    }
+
+    void WriteGearAttackOptions(MenuItem m)
     {
         
         int x = 0;
-        var gearA = m.Action as GearAttackAction;
-        WriteGearAttackOption(gearA!, ref x);
+        var gearA = (GearAttackAction)m.Action;
+
+        WriteGearAttackOption(gearA, ref x);
 
         if (x == 1)
         {
-            _userInteractor.WriteLine($"{m.Id} - {gearA!.Name}"); ;
+            _userInteractor.WriteLine($"{m.Id} - {gearA.Name}"); ;
         }
         else
         {
-            _userInteractor.WriteLine($"{m.Id} - {gearA!.Name} x {x}"); ;
+            _userInteractor.WriteLine($"{m.Id} - {gearA.Name} x {x}"); ;
         }
         
     }
@@ -320,12 +355,9 @@ public class Battle
             y++;
 
             WriteGearAttackOption(ga.AdditionalGearAttackAction!, ref y);
-        }
-        
+        }        
     }
-
-    
-
+   
     private void LootVillainGear(IParty villainParty)
     {
         foreach (var gear in villainParty.GetEquippableGear())
@@ -337,7 +369,7 @@ public class Battle
         foreach (var gear in villainParty.GetEquippedGear())
         {
             _userInteractor.WriteLine($"Added gear: {gear.Name} to Hero party.");
-            Gear.UnequipCharacter(gear);
+            Gear.UnequipFromCharacter(gear);
             _player1.Parties[0].AttackGear.Add(gear);
         }
 
@@ -416,7 +448,17 @@ public class Battle
                 }
                 
                 _userInteractor.WriteLine($"*** {attackingCharacter.Name} dealt {attackData.DamageInfo.InflictedDamage} to {defendingCharacter.Name}");
-                _userInteractor.WriteLine($"**** {defendingCharacter.Name} ({defendingCharacter.Label}) is now at {defendingCharacter.CurrentHealth}/{defendingCharacter.MaximumHP}", TextColor.DarkYellow);
+                
+                if (_defendingPlayer.PlayerType == PlayerType.Computer)
+                {
+                    _userInteractor.WriteLine($"**** {defendingCharacter.Name} is now at {defendingCharacter.CurrentHealth}/{defendingCharacter.MaximumHP}", TextColor.DarkYellow);
+                }
+                else
+                {
+                    _userInteractor.WriteLine($"**** {defendingCharacter.Name} ({defendingCharacter.Label}) is now at {defendingCharacter.CurrentHealth}/{defendingCharacter.MaximumHP}", TextColor.DarkYellow);
+                }
+
+                
             }
             
         }
@@ -429,36 +471,67 @@ public class Battle
 
     
 
-    private void ShowGameStatus(IParty party, int round)
+    private void ShowGameStatus(IParty enemyParty, int round, Character attackingCharacter, Character defendingCharacter)
     {
-        _userInteractor.WriteLine($"================================ BATTLE #{round}================================", TextColor.Blue);
+        _userInteractor.WriteLine($"==================================== BATTLE #{round}====================================", TextColor.Blue);
         foreach (var hero in _player1.Parties[0].GetCharacters())
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("{0,-10} {1,-20} {2,10}", $"{hero.Name}", $"({hero.Label})", $"(  {hero.CurrentHealth}/{hero.MaximumHP}  )", TextColor.Red);
             Console.ForegroundColor = ConsoleColor.White;
         }
-        _userInteractor.WriteLine("----------------------------------- vs ---------------------------------", TextColor.Blue);
+        _userInteractor.WriteLine("---------------------------------------- vs --------------------------------------", TextColor.Blue);
 
-        var characters = party.GetCharacters();
+        Console.ForegroundColor = ConsoleColor.Red;
 
-        foreach(var character in characters)
+        if (_player2.Parties.Contains(attackingCharacter.Party))
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("{0,0} {1,70}", "", $"{character.Name} (  {character.CurrentHealth}/{character.MaximumHP}  )");
-            Console.ForegroundColor = ConsoleColor.White;
+            if (attackingCharacter.EquippedGearItems.Count() > 0)
+            {
+                Console.Write("{0,0} {1,70}", "", $"{attackingCharacter.Id} - {attackingCharacter.Name} (  {attackingCharacter.CurrentHealth}/{attackingCharacter.MaximumHP}  )");
+                var gear = string.Join(",", attackingCharacter.EquippedGearItems.Select(x => x.Name).ToArray());
+                Console.WriteLine($"({gear}) attacker");
+            }
+            else
+            {
+                Console.WriteLine("{0,0} {1,80}", "", $"{attackingCharacter.Id} - {attackingCharacter.Name} (  {attackingCharacter.CurrentHealth}/{attackingCharacter.MaximumHP} ) attacker");
+            }
         }
-        _userInteractor.WriteLine("========================================================================", TextColor.Blue);
 
-        _userInteractor.WriteLine("Gear:");
 
-        foreach (var g in party.AttackGear)
+        if (_player2.Parties.Contains(defendingCharacter.Party))
         {
-            _userInteractor.WriteLine($"{g.Name} Equipped:{g.Equipped} by {(g.EquippedCharacter == null ? "none" : g.EquippedCharacter!.Name)}");
+            if (defendingCharacter.EquippedGearItems.Count() > 0)
+            {
+                Console.Write("{0,0} {1,82}", "", $"{defendingCharacter.Id} - {defendingCharacter.Name} (  {defendingCharacter.CurrentHealth}/{defendingCharacter.MaximumHP}  )");
+                var gear = string.Join(",", defendingCharacter.EquippedGearItems.Select(x => x.Name).ToArray());
+                Console.WriteLine($"({gear}) target");
+            }
+            else
+            {
+                Console.WriteLine("{0,0} {1,80}", "", $"{defendingCharacter.Id} - {defendingCharacter.Name} (  {defendingCharacter.CurrentHealth}/{defendingCharacter.MaximumHP} ) target");
+            }
         }
 
-        _userInteractor.WriteLine("========================================================================", TextColor.Blue);
-
+        foreach (var character in enemyParty.GetCharacters())
+        {
+            if (attackingCharacter != character && defendingCharacter != character)
+            {
+                if (character.EquippedGearItems.Count() > 0)
+                {
+                    Console.Write("{0,0} {1,70}", "", $"{character.Id} - {character.Name} (  {character.CurrentHealth}/{character.MaximumHP}  )");
+                    var gear = string.Join(",", character.EquippedGearItems.Select(x => x.Name).ToArray());
+                    Console.WriteLine($"({gear})");
+                }
+                else
+                {
+                    Console.WriteLine("{0,0} {1,70}", "", $"{character.Id} - {character.Name} (  {character.CurrentHealth}/{character.MaximumHP}  )");
+                }
+            }
+        }
+        _userInteractor.WriteLine("==================================================================================", TextColor.Blue);
+        _userInteractor.WriteLine($"It is {attackingCharacter.Name} ({(attackingCharacter.Label != string.Empty ? $"({attackingCharacter.Label})" : "")})'s turn...choose an option", TextColor.White);
+        _userInteractor.WriteLine("==================================================================================", TextColor.Blue);
     }
 
     private CharacterAction GetHumanPlayerAction(MenuItem[] attackOptions)
